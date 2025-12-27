@@ -1,12 +1,15 @@
 import React from "react";
 
-import { StyledDisplayButton } from "./styles/StyledStartButton";
+const StartButtons = ({ callback, socket }) => {
 
-const StartButtons = ({ callback }) => {
+    const handleStartGame = () => {
+        socket.emit("start_game");
+    };
+
     return (
-        <StyledDisplayButton onClick={callback}>
+        <button onClick={handleStartGame}>
             Start Game
-        </StyledDisplayButton>
+        </button>
     );
     }
 
