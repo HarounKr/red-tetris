@@ -6,9 +6,7 @@ import Display from './Display';
 import { createStage } from '../gameHelpers';
 import { StyledTetrisWrapper, StyledTetris } from './styles/StyledTetris';
 
-const Tetris = (
-    { socket }
-) => {
+const Tetris = () => {
     return (
         <StyledTetrisWrapper>
             <StyledTetris>
@@ -19,7 +17,7 @@ const Tetris = (
                         <Display text="Rows" />
                         <Display text="Level" />
                     </div>
-                    <StartButtons socket={socket} />
+                    <StartButtons />
                 </aside>
             </StyledTetris>
         </StyledTetrisWrapper>

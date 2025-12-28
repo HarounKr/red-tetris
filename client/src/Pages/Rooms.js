@@ -1,99 +1,153 @@
 import React, { useEffect } from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
+import {
+  StyledRoomsWrapper,
+  StyledRooms,
+  StyledPlayerInfo,
+  StyledCreateRoomSection,
+  StyledErrorMessage,
+  StyledGridContainer,
+  StyledSection,
+  StyledList,
+  StyledRoomItem,
+  StyledPlayerItem,
+  ReturnNav
+} from "./styles/styledRooms";
 
 const Rooms = ({ socket }) => {
     const navigate = useNavigate();
     const [name, setName] = useState("");
+  const [playerName, setPlayerName] = useState("");
     const [error, setError] = useState(null);
     const [rooms, setRooms] = useState([]);
     const [players, setPlayers] = useState([]);
 
-    useEffect(() => {
+  useEffect(() => {
+    const fetchPlayerName = () => {
+      socket.emit("get_player_name", { socketId: socket.id }, (response) => {
+        if (response && response.name) {
+          setPlayerName(response.name);
+        }
+      });
+    };
+
+    const initializeRoom = () => {
         socket.emit("get_rooms");
         socket.emit("get_players");
+      fetchPlayerName();
+    };
 
-        const handleRoomsList = (roomsList) => {
-            console.log("Liste des salles reçue:", roomsList);
-            setRooms(roomsList);
-        };
+    if (socket && socket.connected) {
+      initializeRoom();
+    }
 
-        const handlePlayersList = (playersList) => {
-            console.log("Liste des joueurs reçue:", playersList);
-            setPlayers(playersList);
-        };
+    const handleConnect = () => {
+      initializeRoom();
+    };
 
-        socket.on("rooms_list", handleRoomsList);
-        socket.on("players_list", handlePlayersList);
+    socket.on("connect", handleConnect);
 
-        // 🔄 Détecter le rechargement et envoyer la déconnexion
-        const handleBeforeUnload = (e) => {
-            console.log("🔄 Page en cours de rechargement...");
-            socket.emit("player_disconnect", { socketId: socket.id });
-        };
+    const handleRoomsList = (roomsList) => {
+      setRooms(roomsList);
+    };
 
-        window.addEventListener("beforeunload", handleBeforeUnload);
+    const handlePlayersList = (playersList) => {
+      setPlayers(playersList);
+    };
 
-        const wasReloaded = sessionStorage.getItem("wasOnRoomPage");
-        if (wasReloaded === "true") {
-            console.log("🔄 Redirection après rechargement détecté");
+    socket.on("rooms_list", handleRoomsList);
+    socket.on("players_list", handlePlayersList);
+
+    const handleBeforeUnload = (e) => {
+      socket.emit("player_disconnect", { socketId: socket.id });
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    const wasReloaded = sessionStorage.getItem("wasOnRoomPage");
+    if (wasReloaded === "true") {
             sessionStorage.removeItem("wasOnRoomPage");
             navigate("/");
-        } else {
+    }
+    else {
             sessionStorage.setItem("wasOnRoomPage", "true");
         }
 
         return () => {
+          socket.off("connect", handleConnect);
             socket.off("rooms_list", handleRoomsList);
             socket.off("players_list", handlePlayersList);
             window.removeEventListener("beforeunload", handleBeforeUnload);
             sessionStorage.removeItem("wasOnRoomPage");
         };
-    }, [socket, navigate]);
+  }, [socket, navigate]); 
     
     const handleNameSubmit = () => {
         if (!name) {
             setError("Room name is required");
             return;
         }
-        setError(null);
-        console.log("Room name submitted:", name);
+      setError(null);
         navigate(`/${name}`);
     };
 
+
   return (
-    <div>
-      <h1>Create Your Room</h1>
-      <p>Socket ID: {socket?.id}</p>
-      <p>Connecté: {socket?.connected ? "✅" : "❌"}</p>
-      <label htmlFor="name">Please enter your room name:</label>
-      <input type="text" id="name" placeholder="Enter your room name" value={name} onChange={(e) => setName(e.target.value)} />
-      <button onClick={handleNameSubmit}>Start Game</button>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      <h2>Current Rooms:</h2>
-      <ul>
-        {rooms.length === 0 ? (
-          <p>No rooms available. Create one!</p>
-        ) : (
-          rooms.map((room, index) => (
-            <li key={index}>
-              <h1>{room}</h1>
-              <button onClick={() => navigate(`/${room}`)}>Join Room</button>
-            </li>
-          ))
-        )}
-      </ul>
-      <h2>Current Players: ({players.length})</h2>
-      <ul>
-        {players.length === 0 ? (
-          <p>No players connected.</p>
-        ) : (
-          players.map((player, index) => (
-            <li key={index}>{player}</li>
-          ))
-        )}
-      </ul>
-    </div>
+    <StyledRoomsWrapper>
+      <StyledPlayerInfo isConnected={socket?.connected}>
+        <div className="status-dot"></div>
+        <span>{playerName}</span>
+      </StyledPlayerInfo>
+
+      <StyledRooms>
+        <h1>Red Tetris</h1>
+
+        <StyledCreateRoomSection>
+          <input
+            type="text"
+            id="name"
+            placeholder="Enter room name..."
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <button onClick={handleNameSubmit}>Create Room</button>
+        </StyledCreateRoomSection>
+
+        {error && <StyledErrorMessage>{error}</StyledErrorMessage>}
+
+        <StyledGridContainer>
+          <StyledSection>
+            <h2>Available Rooms</h2>
+            <StyledList>
+              {rooms.length === 0 ? (
+                <p className="empty-message">No rooms available. Create one!</p>
+              ) : (
+                rooms.map((room, index) => (
+                  <StyledRoomItem key={index}>
+                    <span className="room-name">{room}</span>
+                    <button onClick={() => navigate(`/${room}`)}>Join</button>
+                  </StyledRoomItem>
+                ))
+              )}
+            </StyledList>
+          </StyledSection>
+
+          <StyledSection>
+            <h2>Players Online ({players.length})</h2>
+            <StyledList>
+              {players.length === 0 ? (
+                <p className="empty-message">No players connected.</p>
+              ) : (
+                players.map((player, index) => (
+                  <StyledPlayerItem key={index}>{player}</StyledPlayerItem>
+                ))
+              )}
+            </StyledList>
+          </StyledSection>
+        </StyledGridContainer>
+      </StyledRooms>
+    </StyledRoomsWrapper>
   );
 };
 
