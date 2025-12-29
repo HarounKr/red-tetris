@@ -12,7 +12,7 @@ import { Route } from "react-router";
 const { io } = require("socket.io-client");
 
 // Créer le socket UNE SEULE FOIS en dehors du render
-const socket = io("http://localhost:8000", {
+const socket = io(process.env.backend_URL, {
   transports: ['websocket', 'polling']
 });
 
