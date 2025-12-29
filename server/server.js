@@ -33,12 +33,6 @@ const io = new Server(httpServer, {
     }
 });
 
-user = {
-    name: null,
-    socketId: null,
-    owner: false
-};
-
 room = {
     name: null,
     players: []
@@ -49,24 +43,32 @@ rooms = [];
 io.on("connection", (socket) => {
     let user = {
         name: "guest " + Math.floor(Math.random() * 1000),
-        socketId: socket.id
+        socketId: socket.id,
+        owner: false,
+        TetrisMap: [],
+        score: 0
     };
     users.push(user);
-    socket.on("disconnect", () => {
-        users = users.filter((user) => user.socketId !== socket.id);
-    });
 
-    socket.on("start_game", () => {
+    socket.on("start_game", ({ gameRoom }) => {
         console.log("Le jeu a été démarré par la socket ID:", socket.id);
+        let roomObj = rooms.find((r) => r.name === gameRoom);
+        if (roomObj) {
+            roomObj.start = true;
+        }
+        io.to(gameRoom).emit("game_started");
     });
 
-    socket.on("set_name", ({ name, socketId }) => {
-        user = users.find((user) => user.socketId === socketId);
+
+    socket.on("get_player_name", ({ socketId }, callback) => {
+        let user = users.find((user) => user.socketId === socketId);
         if (user) {
-            user.name = name;
+            callback(user);
+        } else {
+            callback(null);
         }
-        io.emit("players_list", users.map((user) => user.name).filter((name) => name !== null));
     });
+
     socket.on("player_disconnect", ({ socketId }) => {
         users = users.filter((user) => user.socketId !== socketId);
         io.emit("players_list", users.map((user) => user.name).filter((name) => name !== null));
@@ -87,62 +89,75 @@ io.on("connection", (socket) => {
         if (!rooms.find((r) => r.name === room)) {
             let roomObj = {};
             roomObj.name = room;
+            roomObj.start = false;
             roomObj.players = users.filter((user) => user.socketId === socketId);
+            if (roomObj.players.length === 1) {
+                roomObj.players[0].owner = true;
+                io.to(roomObj.players[0].socketId).emit("you_are_owner", { owner: true });
+            }
             rooms.push(roomObj);
             io.emit("rooms_list", rooms.map((room) => room.name));
-        } else {
+            const usersInRoom = Array.from(io.sockets.adapter.rooms.get(room) || []);
+            const userNamesInRoom = usersInRoom.map((socketId) => {
+                let user = users.find((u) => u.socketId === socketId);
+                return user ? user.name : null;
+            }).filter((name) => name !== null);
+
+            io.to(room).emit("players_list_in_room", roomObj.players);
+        }
+        else {
             let roomObj = rooms.find((r) => r.name === room);
             let userToAdd = users.find((user) => user.socketId === socketId);
             if (roomObj && userToAdd && !roomObj.players.find((p) => p.socketId === socketId)) {
                 roomObj.players.push(userToAdd);
             }
+            if (roomObj.players)
+                io.to(room).emit("players_list_in_room", roomObj.players);
         }
-        const usersInRoom = Array.from(io.sockets.adapter.rooms.get(room) || []);
-        const userNamesInRoom = usersInRoom.map((socketId) => {
-            let user = users.find((u) => u.socketId === socketId);
-            return user ? user.name : null;
-        }).filter((name) => name !== null);
-        io.to(room).emit("players_list_in_room", userNamesInRoom);
+
     });
 
     socket.on("leave_room", ({ room, socketId }) => {
-        console.log(`🔴 User ${socketId} leaving room: ${room}`);
-
-        // ✅ IMPORTANT: Émettre AVANT de quitter la room
         const usersInRoomBefore = Array.from(io.sockets.adapter.rooms.get(room) || []);
-        console.log("👥 Users in room BEFORE leave:", usersInRoomBefore);
-
-        // Retirer le joueur de la liste des rooms
+        const userLeaving = users.find(u => u.socketId === socketId);
+        if (userLeaving) {
+            userLeaving.owner = false;
+        }
         const roomObj = rooms.find((r) => r.name === room);
         if (roomObj) {
             roomObj.players = roomObj.players.filter((player) => player.socketId !== socketId);
-            console.log("📋 Room after leave:", JSON.stringify(roomObj, null, 2));
+            if (roomObj.players.length > 0) {
+                roomObj.players[0].owner = true;
+                io.to(roomObj.players[0].socketId).emit("you_are_owner", { owner: true });
+            }
 
-            // Si la room est vide, la supprimer
             if (roomObj.players.length === 0) {
                 rooms = rooms.filter((r) => r.name !== room);
-                console.log("🗑️ Room deleted (empty):", room);
                 io.emit("rooms_list", rooms.map((room) => room.name));
             }
         }
-
-        // ✅ Calculer la nouvelle liste SANS le joueur qui part
-        const usersStillInRoom = usersInRoomBefore.filter(sid => sid !== socketId);
-        const userNamesStillInRoom = usersStillInRoom.map((sid) => {
-            const user = users.find(u => u.socketId === sid);
-            return user ? user.name : null;
-        }).filter((name) => name !== null);
-
-        console.log("👥 Users STILL in room:", userNamesStillInRoom);
-
-        // ✅ Émettre la mise à jour AVANT de leave
-        io.to(room).emit("players_list_in_room", userNamesStillInRoom);
-        console.log(`📤 Emitted players_list to room ${room}:`, userNamesStillInRoom);
-
-        // ✅ Quitter la room APRÈS avoir émis
+        const usersStillInRoom = usersInRoomBefore.filter(sid => sid !== socketId)
+        const usersInRoom = usersStillInRoom.map((socketId) => {
+            let user = users.find((u) => u.socketId === socketId);
+            return user
+        });
+        room.players = usersInRoom;
+        io.to(room).emit("players_list_in_room", usersInRoom);
         socket.leave(room);
+    });
 
-        console.log(`✅ User ${socketId} left room: ${room}`);
+    socket.on("player_return_home", ({ socketId }) => {
+        let user = users.find((user) => user.socketId === socketId);
+        if (user) {
+            user.name = "guest " + Math.floor(Math.random() * 1000);
+        }
+        io.emit("players_list", users.map((user) => user.name).filter((name) => name !== null));
+        rooms.forEach((room) => {
+            room.players = room.players.filter((p) => p.socketId !== socketId);
+        });
+        rooms = rooms.filter((room) => room.players.length > 0);
+        io.emit("rooms_list", rooms.map((room) => room.name));
+
     });
 
     socket.on("disconnect", () => {
@@ -150,9 +165,9 @@ io.on("connection", (socket) => {
         rooms.forEach((room) => {
             socket.leave(room.name);
             room.players = room.players.filter((p) => p.socketId !== socket.id);
+            io.to(room.name).emit("players_list_in_room", room.players);
         });
         rooms = rooms.filter((room) => room.players.length > 0);
-        io.emit("players_list_in_room", users.map((user) => user.name).filter((name) => name !== null));
         io.emit("players_list", users.map((user) => user.name).filter((name) => name !== null));
         io.emit("rooms_list", rooms.map((room) => room.name));
 

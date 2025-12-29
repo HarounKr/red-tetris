@@ -61,6 +61,9 @@ const Room = ({ socket }) => {
         socket.on("connect", handleConnect);
         socket.on("players_list_in_room", handlePlayersList);
         socket.on("you_are_owner", handleYouAreOwner);
+        socket.on("game_started", () => {
+            navigate('/game');
+        });
         window.addEventListener("beforeunload", handleBeforeUnload);
 
         if (socket && socket.connected) {
@@ -80,7 +83,8 @@ const Room = ({ socket }) => {
     }, [socket, params.room]);
 
     const handleStartGame = () => {
-        socket.emit("start_game");
+        console.log("Starting game in room:", roomName);
+        socket.emit("start_game", { gameRoom: roomName });
     };
 
     const handleLeaveRoom = () => {
