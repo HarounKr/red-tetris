@@ -39,6 +39,7 @@ room = {
 };
 
 users = [];
+
 rooms = [];
 io.on("connection", (socket) => {
     let user = {

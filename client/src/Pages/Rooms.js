@@ -18,7 +18,7 @@ import {
 const Rooms = ({ socket }) => {
     const navigate = useNavigate();
     const [name, setName] = useState("");
-  const [playerName, setPlayerName] = useState("");
+    const [playerName, setPlayerName] = useState("");
     const [error, setError] = useState(null);
     const [rooms, setRooms] = useState([]);
     const [players, setPlayers] = useState([]);

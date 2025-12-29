@@ -7,7 +7,7 @@ export const TETROMINOS = {
             [0, 'I', 0, 0],
             [0, 'I', 0, 0],
         ],
-        color: '80, 227, 230',
+        color: '0, 227, 230',
     },
     J: {
         shape: [
