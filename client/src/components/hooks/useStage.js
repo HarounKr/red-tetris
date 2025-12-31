@@ -5,7 +5,7 @@ export const useStage = (player, resetPlayer) => {
     
     const [stage, setStage] = useState(createStage());
 
-    useEffect(() => { 
+    useEffect(() => {
         const updateStage = prevStage => {
             // Clear cells marked as 'clear'
             const newStage = prevStage.map(row =>
@@ -26,8 +26,8 @@ export const useStage = (player, resetPlayer) => {
 
             if (player.collided) {
                resetPlayer();
-            }           
-
+            }
+            
             return newStage;
         };
 
