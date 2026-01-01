@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { createStage } from '../../gameHelpers';
+import { createStage, drawPlayer } from '../../gameHelpers';
 
 export const useStage = (player, resetPlayer) => {
     
@@ -23,23 +23,8 @@ export const useStage = (player, resetPlayer) => {
             }, []);
         }
 
-        const updateStage = prevStage => {
-            // Clear cells marked as 'clear'
-            const newStage = prevStage.map(row =>
-                row.map(cell => (cell[1] === 'clear' ? [0, 'clear'] : cell))
-            );
-
-            // Draw the tetromino at the player's position
-            player.tetromino.forEach((row, y) => {
-                row.forEach((value, x) => {
-                    if (value !== 0) {
-                        newStage[y + player.pos.y][x + player.pos.x] = [
-                            value,
-                            player.collided ? 'merged' : 'clear',
-                        ];
-                    }
-                });
-            });
+        const updateStage = (prevStage) => {
+            const newStage = drawPlayer(prevStage, player);
 
             if (player.collided) {
                resetPlayer();
@@ -52,5 +37,13 @@ export const useStage = (player, resetPlayer) => {
         setStage(prev => updateStage(prev));
     },  [player, resetPlayer]);
 
-    return [stage, setStage, rowsCleared];
+    const drawPlayerSpectrum = (player) => {
+        const spectrumStage = createStage();
+
+        const playerSpectrum = drawPlayer(spectrumStage, player);
+
+        return playerSpectrum;
+    }
+
+    return [stage, setStage, rowsCleared, drawPlayerSpectrum];
 };  

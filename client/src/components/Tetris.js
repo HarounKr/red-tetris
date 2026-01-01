@@ -9,16 +9,35 @@ import { usePlayer } from './hooks/usePlayer';
 import { useInterval } from './hooks/useInterval';
 import { StyledTetrisWrapper, StyledTetris } from './styles/StyledTetris';
 import { useGameStatus } from './hooks/useGameStatus';
+import { randomTetromino } from '../tetrominos';
+import Spectrums from './Spectrums';
 
 const Tetris = (selectedGravity) => {
 
     const [gameOver, setGameOver] = useState(false);
     const [dropTime, setDropTime] = useState(null);
     const [player, updatePlayerPos, resetPlayer, nextRandomShape, playerRotate] = usePlayer(null);
-    const [stage, setStage, rowsCleared] = useStage(player, resetPlayer, gameOver);
+    const [stage, setStage, rowsCleared, drawPlayersSpectrums] = useStage(player, resetPlayer, gameOver);
     const [level, setLevel, rows, setRows, score, setScore] = useGameStatus(rowsCleared);
+    const [playersSpectrums, setPlayersSpectrums] = useState();
+    const [otherPlayers, setOtherPlayers] = useState([
+        {
+            name: 'guest1',
+            pos: { x: 4, y: 1 },
+            score: 1,
+            tetromino: randomTetromino().shape,
+            collided: false,
+        }, 
+        {
+            name: 'guest2',
+            pos: { x: 4, y: 5 },
+            score: 3,
+            tetromino: randomTetromino().shape,
+            collided: false,
+        }
 
-    const [nextPieceStage, setNextPieceStage] = useState(createNextPieceStage());
+    ]);
+
 
     const gravity = useMemo(() => ({
         Turtle: 2000,
@@ -43,6 +62,16 @@ const Tetris = (selectedGravity) => {
         setScore(0);
         setRows(0);
         setLevel(0);
+
+        const players = []
+        for (let i = 0; i < otherPlayers.length; i++) {
+            const playerSpectrum = drawPlayersSpectrums(otherPlayers[i]);
+            players.push({ 
+                player: otherPlayers[i],
+                spectrum: playerSpectrum,
+            })
+        }
+        setPlayersSpectrums(players);
     }, []);
 
 
@@ -50,6 +79,15 @@ const Tetris = (selectedGravity) => {
         //leave game
         
     };
+
+    useEffect(() => {
+        if (playersSpectrums) {
+
+            playersSpectrums.map(( { player, spectrum}) => {
+                console.log(player, spectrum)
+            })
+        }
+    }, [playersSpectrums])
 
     const drop = () => {
         if (rows > (level + 1) * 10) {
@@ -100,16 +138,7 @@ const Tetris = (selectedGravity) => {
         <StyledTetrisWrapper role="button" tabIndex="0" onKeyDown={e => moove(e)}>
             <StyledTetris>
                 <div className='left-side'>
-                    <div className='spectrum'>
-                        <span>
-                            Score
-                        </span>
-                            <Stage stage={stage} percentage={3.5} border={'0px solid #9b4747ff'} backgroundColor={'#707070ff'} isSpectrum={true} opacity={0.2}/>
-                        <span>
-                            Name
-                        </span>
-                        
-                    </div>
+                    <Spectrums playersSpectrums={playersSpectrums} />
                 </div>
                     <Stage stage={stage} percentage={20} border={'2px solid #333'} backgroundColor={'#000000ff'} isSpectrum={false} />
                 <div className='right-side'>

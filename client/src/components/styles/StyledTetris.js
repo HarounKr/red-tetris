@@ -6,11 +6,11 @@ export const StyledTetrisWrapper = styled.div`
     background-color: #000;
     background-size: cover;
     overflow: hidden;
+    &:focus { outline: none; }
 `;
 
 export const StyledTetris = styled.div`
     display: flex;
-    align-items: stretch;
     flex-direction: row;
     gap: 15px;
     padding: 40px;
@@ -18,12 +18,15 @@ export const StyledTetris = styled.div`
     max-width: 900px;
 
     .left-side {
+        display: flex;
+        flex-direction: column;
         width: 100%;
         max-width: 100px;
         padding: 0 20px;
         color:white;
+        gap: 20px;
         font-size: 15px;
-        
+
         .spectrum {
             display: flex;
             flex-direction: column;
