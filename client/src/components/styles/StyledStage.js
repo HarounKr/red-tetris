@@ -6,7 +6,8 @@ export const StyledStage = styled.div`
     grid-template-columns: repeat(${props => props.width}, 1fr);
     width: fit-content;
     height: fit-content;
-    border: 2px solid #333;
-    background-color: #111;
+    border: ${props => props.border};
+    background-color: ${props => props.backgroundColor};
     margin: 0 auto;
+    opacity: ${(props) => props.opacity ? props.opacity : 1}
 `

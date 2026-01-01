@@ -52,7 +52,6 @@ const Tetris = (selectedGravity) => {
     };
 
     const drop = () => {
-        console.log(dropTime)
         if (rows > (level + 1) * 10) {
             setLevel(prev => prev + 1);
             setDropTime(dropTime / (level + 1) + 200);
@@ -100,8 +99,20 @@ const Tetris = (selectedGravity) => {
     return (
         <StyledTetrisWrapper role="button" tabIndex="0" onKeyDown={e => moove(e)}>
             <StyledTetris>
-                <Stage stage={stage} percentage={20} />
-                <aside>
+                <div className='left-side'>
+                    <div className='spectrum'>
+                        <span>
+                            Score
+                        </span>
+                            <Stage stage={stage} percentage={3.5} border={'0px solid #9b4747ff'} backgroundColor={'#707070ff'} isSpectrum={true} opacity={0.2}/>
+                        <span>
+                            Name
+                        </span>
+                        
+                    </div>
+                </div>
+                    <Stage stage={stage} percentage={20} border={'2px solid #333'} backgroundColor={'#000000ff'} isSpectrum={false} />
+                <div className='right-side'>
                     {gameOver ? (
                         <Display gameOver={gameOver} text="Game Over" />
                     ) : (
@@ -115,7 +126,7 @@ const Tetris = (selectedGravity) => {
                         </>
                    )}
                    
-                </aside>
+                </div>
             </StyledTetris>
         </StyledTetrisWrapper>
     );
