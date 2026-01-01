@@ -11,9 +11,23 @@ import { Route } from "react-router";
 
 const { io } = require("socket.io-client");
 
-// Créer le socket UNE SEULE FOIS en dehors du render
+const getSessionId = () => {
+  let sessionId = sessionStorage.getItem('socketSessionId');
+  if (!sessionId) {
+    sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    sessionStorage.setItem('socketSessionId', sessionId);
+  }
+  return sessionId;
+};
+
 const socket = io("http://localhost:8000", {
-  transports: ['websocket', 'polling']
+  transports: ['websocket', 'polling'],
+  auth: {
+    sessionId: getSessionId()
+  },
+  reconnection: true,
+  reconnectionDelay: 1000,
+  reconnectionAttempts: 10
 });
 
 const root = ReactDOM.createRoot(document.getElementById('root'));

@@ -6,7 +6,6 @@ const port = process.env.PORT || 8000;
 const env = process.env.NODE_ENV;
 const { Server } = require("socket.io");
 
-console.log('Server starting in ' + env + ' mode');
 if (env === 'production') {
     app.use(express.static(path.join(__dirname, '../client/build')));
 } else {
@@ -17,7 +16,6 @@ if (env === 'production') {
 
 app.get('/api/health', (req, res) => {
     res.send('OK');
-    console.log('Health check OK');
 });
 
 app.get("/*splat", (req, res) => {
@@ -39,20 +37,47 @@ room = {
 };
 
 users = [];
-
 rooms = [];
+
+const sessionStore = new Map();
+
 io.on("connection", (socket) => {
-    let user = {
-        name: "guest " + Math.floor(Math.random() * 1000),
-        socketId: socket.id,
-        owner: false,
-        TetrisMap: [],
-        score: 0
-    };
-    users.push(user);
+    const sessionId = socket.handshake.auth.sessionId;
+    console.log(`Socket connected: ${socket.id}, sessionId: ${sessionId}`);
+
+    let user;
+
+    if (sessionId && sessionStore.has(sessionId)) {
+        const savedSession = sessionStore.get(sessionId);
+        user = {
+            ...savedSession,
+            socketId: socket.id 
+        };
+
+        const existingIndex = users.findIndex(u => u.sessionId === sessionId);
+        if (existingIndex !== -1) {
+            users[existingIndex] = user;
+        } else {
+            users.push(user);
+        }
+
+    } else {
+        user = {
+            name: "guest " + Math.floor(Math.random() * 1000),
+            socketId: socket.id,
+            sessionId: sessionId,
+            owner: false,
+            TetrisMap: [],
+            score: 0
+        };
+        users.push(user);
+
+        if (sessionId) {
+            sessionStore.set(sessionId, { ...user });
+        }
+    }
 
     socket.on("start_game", ({ gameRoom }) => {
-        console.log("Le jeu a été démarré par la socket ID:", socket.id);
         let roomObj = rooms.find((r) => r.name === gameRoom);
         if (roomObj) {
             roomObj.start = true;
@@ -62,12 +87,19 @@ io.on("connection", (socket) => {
 
 
     socket.on("get_player_name", ({ socketId }, callback) => {
+        const sessionId = socket.handshake.auth.sessionId;
+
         let user = users.find((user) => user.socketId === socketId);
-        if (user) {
-            callback(user);
-        } else {
-            callback(null);
+
+        if (!user && sessionId && sessionStore.has(sessionId)) {
+            const savedSession = sessionStore.get(sessionId);
+            user = {
+                ...savedSession,
+                socketId: socketId
+            };
+            users.push(user);
         }
+        callback(user || null);
     });
 
     socket.on("player_disconnect", ({ socketId }) => {
@@ -162,6 +194,13 @@ io.on("connection", (socket) => {
     });
 
     socket.on("disconnect", () => {
+        const sessionId = socket.handshake.auth.sessionId;
+        const user = users.find((u) => u.socketId === socket.id);
+
+        if (user && sessionId) {
+            sessionStore.set(sessionId, { ...user });
+        }
+
         users = users.filter((user) => user.socketId !== socket.id);
         rooms.forEach((room) => {
             socket.leave(room.name);
@@ -171,7 +210,6 @@ io.on("connection", (socket) => {
         rooms = rooms.filter((room) => room.players.length > 0);
         io.emit("players_list", users.map((user) => user.name).filter((name) => name !== null));
         io.emit("rooms_list", rooms.map((room) => room.name));
-
     });
 });
 
