@@ -1,9 +1,9 @@
 import Tetris from './components/Tetris';
 
-const App = ({ socket }) => {
+const App = ({ socket, selectedGravity }) => {
   return (
     <div className="App">
-      <Tetris socket={socket} />
+      <Tetris socket={socket} selectedGravity={selectedGravity} />
     </div>
   );
 }

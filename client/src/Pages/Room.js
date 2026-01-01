@@ -13,7 +13,7 @@ import {
     StyledPlayerStatus
 } from "./styles/StyledRoom";
 
-const Room = ({ socket }) => {
+const Room = ({ socket, selectedGravity }) => {
     // create the room name from the url params
 
     const params = useParams();
