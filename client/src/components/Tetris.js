@@ -1,24 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 
 import Stage from './Stage';
-import StartButtons from './StartButtons';
 import Display from './Display';
+import LeaveButtons from './LeaveButtons';
 import { createStage, checkCollision, createNextPieceStage } from '../gameHelpers';
 import { useStage } from './hooks/useStage';
 import { usePlayer } from './hooks/usePlayer';
+import { useInterval } from './hooks/useInterval';
 import { StyledTetrisWrapper, StyledTetris } from './styles/StyledTetris';
+import { useGameStatus } from './hooks/useGameStatus';
 
-const Tetris = () => {
+const Tetris = (selectedGravity) => {
 
     const [gameOver, setGameOver] = useState(false);
     const [dropTime, setDropTime] = useState(null);
     const [player, updatePlayerPos, resetPlayer, nextRandomShape, playerRotate] = usePlayer(null);
-    const [stage, setStage] = useStage(player, resetPlayer);
+    const [stage, setStage, rowsCleared] = useStage(player, resetPlayer, gameOver);
+    const [level, setLevel, rows, setRows, score, setScore] = useGameStatus(rowsCleared);
 
     const [nextPieceStage, setNextPieceStage] = useState(createNextPieceStage());
 
-    console.log('re-render');
-
+    const gravity = useMemo(() => ({
+        Turtle: 2000,
+        Standard: 1000,
+        Fast: 100,
+    }), [])
+       
+    
     const movePlayer = dir => {
         //move player
         if (!checkCollision(player, stage, { x: dir, y: 0 })) {
@@ -26,22 +34,38 @@ const Tetris = () => {
         }
     };
 
-    const startGame = () => {
-        //reset everything
-        console.log('start game');
+    useEffect(() => {
         setStage(createStage());
+        const initialDrop = gravity[selectedGravity] || gravity.Standard;
+        console.log(initialDrop)
+        setDropTime(initialDrop);
         resetPlayer();
+        setScore(0);
+        setRows(0);
+        setLevel(0);
+    }, []);
+
+
+    const leaveGame = () => {
+        //leave game
+        
     };
 
     const drop = () => {
+        console.log(dropTime)
+        if (rows > (level + 1) * 10) {
+            setLevel(prev => prev + 1);
+            setDropTime(dropTime / (level + 1) + 200);
+        }
         //drop tetromino
         if (!checkCollision(player, stage, { x: 0, y: 1 })) {
             updatePlayerPos({ x: 0, y: 1, collided: false });
         } else {
             // Game over
-            if (player.pos.y < 1) {
-                console.log("Game Over!");
+            if (player.pos.y <= 1) {
                 setGameOver(true);
+                setDropTime(null);
+                return;
             }
             updatePlayerPos({ x: 0, y: 0, collided: true });
         }
@@ -63,27 +87,31 @@ const Tetris = () => {
                 // down arrow
                 dropPlayer();
             } else if (keyCode === 38) {
-                playerRotate(stage, 1)
                 // up arrow
+                playerRotate(stage, 1); 
             }
         }
     };
 
+    useInterval(() => {
+            drop();
+    }, dropTime);
+
     return (
         <StyledTetrisWrapper role="button" tabIndex="0" onKeyDown={e => moove(e)}>
             <StyledTetris>
-                <Stage stage={stage} />
+                <Stage stage={stage} percentage={20} />
                 <aside>
                     {gameOver ? (
                         <Display gameOver={gameOver} text="Game Over" />
                     ) : (
                         <>
                             <div>
-                                <Display text="Score" />
-                                <Display text="Rows" />
-                                <Display text="Level" />
+                                <Display text={"Score " + score}/>
+                                <Display text={"Rows " + rows} />
+                                <Display text={"Level " + level } />
                             </div>
-                            <StartButtons callback={startGame}/> 
+                            <LeaveButtons callback={leaveGame}/> 
                         </>
                    )}
                    
@@ -91,5 +119,6 @@ const Tetris = () => {
             </StyledTetris>
         </StyledTetrisWrapper>
     );
-    }
+}
+
 export default Tetris;

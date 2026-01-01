@@ -56,7 +56,7 @@ export const StyledRooms = styled.div`
     display: flex;
     flex-direction: column;
     padding: 40px;
-    max-width: 1200px;
+    max-width: 900px;
     width: 100%;
     max-height: 85vh;
     background: rgba(255, 255, 255, 0.1);
@@ -74,9 +74,16 @@ export const StyledRooms = styled.div`
 
 export const StyledCreateRoomSection = styled.div`
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: stretch;
     gap: 15px;
     margin-bottom: 30px;
+
+    .room-row {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
 
     input {
         flex: 1;
@@ -210,5 +217,49 @@ export const ReturnNav = styled.div`
         border-radius: 8px;
         transition: background-color 0.3s ease;
 
+    }
+`;
+
+export const StyledGravitySelector = styled.div`
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+ 
+    border-radius: 12px;
+    padding: 12px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    align-self: center;
+    width: 100%;
+
+    .options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: center;
+        flex: 0 1 auto;
+    }
+
+    .option {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 10px;
+        background: rgba(0, 0, 0, 0.25);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: red;
+        cursor: pointer;
+    }
+
+    .label {
+        color: #fff;
+        font-size: 0.95rem;
     }
 `;

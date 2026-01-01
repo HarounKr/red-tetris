@@ -2,35 +2,35 @@ export const TETROMINOS = {
     0: { shape: [[0]], color: '0, 0, 0' },
     I: {
         shape: [
-            [0, 'I', 0, 0],
-            [0, 'I', 0, 0],
-            [0, 'I', 0, 0],
-            [0, 'I', 0, 0],
+            [0, 0, 0, 0],
+            ['I', 'I', 'I', 'I'],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
         ],
-        color: '0, 227, 230',
+        color: '79, 209, 197',   // cyan doux
     },
     J: {
         shape: [
-            [0, 'J', 0],
-            [0, 'J', 0],
-            ['J', 'J', 0],
+            ['J', 0, 0],
+            ['J', 'J', 'J'],
+            [0, 0, 0],
         ],
-        color: '36, 95, 223',
+        color: '71, 97, 255',    // bleu vif
     },
     L: {
         shape: [
-            [0, 'L', 0],
-            [0, 'L', 0],
-            [0, 'L', 'L'],
+            [0, 0, 'L'],
+            ['L', 'L', 'L'],
+            [0, 0, 0],
         ],
-        color: '223, 173, 36',
+        color: '255, 170, 74',   // orange chaud
     },
     O: {
         shape: [
             ['O', 'O'],
             ['O', 'O'],
         ],
-        color: '223, 217, 36',
+        color: '255, 214, 102',  // jaune doux
     },
     S: {
         shape: [
@@ -38,15 +38,15 @@ export const TETROMINOS = {
             ['S', 'S', 0],
             [0, 0, 0],
         ],
-        color: '48, 211, 56',
+        color: '126, 217, 87',   // vert frais
     },
     T: {
         shape: [
-            [0, 0, 0],
-            ['T', 'T', 'T'],
             [0, 'T', 0],
+            ['T', 'T', 'T'],
+            [0, 0, 0],
         ],
-        color: '132, 61, 198',
+        color: '155, 109, 239',  // violet moderne
     },
     Z: {
         shape: [
@@ -54,9 +54,10 @@ export const TETROMINOS = {
             [0, 'Z', 'Z'],
             [0, 0, 0],
         ],
-        color: '227, 78, 78',
+        color: '245, 90, 90',    // rouge saumon
     },
 };
+
 
 export const randomTetromino = () => {
     const tetrominos = 'IJLOSTZ';

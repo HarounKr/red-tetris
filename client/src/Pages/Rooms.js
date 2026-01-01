@@ -12,16 +12,23 @@ import {
   StyledList,
   StyledRoomItem,
   StyledPlayerItem,
-  ReturnNav
+  ReturnNav,
+  StyledGravitySelector
 } from "./styles/styledRooms";
 
-const Rooms = ({ socket }) => {
+const Rooms = ({ socket, selectedGravity, setSelectedGravity }) => {
     const navigate = useNavigate();
     const [name, setName] = useState("");
     const [playerName, setPlayerName] = useState("");
     const [error, setError] = useState(null);
     const [rooms, setRooms] = useState([]);
     const [players, setPlayers] = useState([]);
+
+    const gravityOptions = [
+      { value: "Turtle", label: "Turtle" },
+      { value: "Standard", label: "Standard"},
+      { value: "Fast", label: "Fast"},
+    ];
 
   useEffect(() => {
     const fetchPlayerName = () => {
@@ -92,7 +99,6 @@ const Rooms = ({ socket }) => {
         navigate(`/${name}`);
     };
 
-
   return (
     <StyledRoomsWrapper>
       <StyledPlayerInfo isConnected={socket?.connected}>
@@ -104,14 +110,31 @@ const Rooms = ({ socket }) => {
         <h1>Red Tetris</h1>
 
         <StyledCreateRoomSection>
-          <input
-            type="text"
-            id="name"
-            placeholder="Enter room name..."
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <button onClick={handleNameSubmit}>Create Room</button>
+          <div className="room-row">
+            <input
+              type="text"
+              id="name"
+              placeholder="Enter room name..."
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+            <button onClick={handleNameSubmit}>Create Room</button>
+          </div>
+
+          <StyledGravitySelector>
+            <div className="options">
+              {gravityOptions.map((option) => (
+                <label key={option.value} className="option">
+                  <input
+                    type="checkbox"
+                    checked={selectedGravity === option.value}
+                    onChange={() => setSelectedGravity && setSelectedGravity(option.value)}
+                  />
+                  <span className="label">{option.label}</span>
+                </label>
+              ))}
+            </div>
+          </StyledGravitySelector>
         </StyledCreateRoomSection>
 
         {error && <StyledErrorMessage>{error}</StyledErrorMessage>}

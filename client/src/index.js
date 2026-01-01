@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import Rooms from './Pages/Rooms';
@@ -32,14 +32,24 @@ const socket = io("http://localhost:8000", {
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
-root.render(
-  <BrowserRouter>
-    <Routes>
-      <Route path="/game" element={<App socket={socket} />} />
-      <Route path="/" element={<Rooms socket={socket} />} />
-      <Route path="/:room" element={<Room socket={socket} />} />
-    </Routes>
-  </BrowserRouter>
-);
+const Root = () => {
+  const [selectedGravity, setSelectedGravity] = useState('Standard');
+
+  useEffect(() => {
+    console.log(selectedGravity)
+  }, [selectedGravity])
+
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/game" element={<App socket={socket} selectedGravity={selectedGravity} />} />
+        <Route path="/" element={<Rooms socket={socket} selectedGravity={selectedGravity} setSelectedGravity={setSelectedGravity} />} />
+        <Route path="/:room" element={<Room socket={socket} selectedGravity = {selectedGravity} />} />
+      </Routes>
+    </BrowserRouter>
+  );
+};
+
+root.render(<Root />);
 
 reportWebVitals();
