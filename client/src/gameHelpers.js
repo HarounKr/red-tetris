@@ -17,21 +17,7 @@ export const createStage = () => {
     return stage;
 };
 
-export const createNextPieceStage = () => {
-    const stage =[];
 
-    for (let i = 0; i < 4; i++) {
-        const row = [];
-
-        for (let j = 0; j < 4; j++) {
-            const cell = [0, 'clear'];
-            row.push(cell);
-        }
-
-        stage.push(row);
-    }
-    return stage;
-};
 
 export const checkCollision = (player, stage, { x: moveX, y: moveY }) => {
     for (let y = 0; y < player.tetromino.length; y++) {                    // parcourir chaque ligne de la pièce
@@ -50,3 +36,23 @@ export const checkCollision = (player, stage, { x: moveX, y: moveY }) => {
     return false;                                                          // aucune collision trouvée
 };
 
+
+export const drawPlayer = (stage, player) => {
+    const newStage = stage.map(row =>
+        row.map(cell => (cell[1] === 'clear' ? [0, 'clear'] : cell))
+    );
+
+    // Draw the tetromino at the player's position
+    player.tetromino.forEach((row, y) => {
+        row.forEach((value, x) => {
+            if (value !== 0) {
+                newStage[y + player.pos.y][x + player.pos.x] = [
+                    value,
+                    player.collided ? 'merged' : 'clear',
+                ];
+            }
+        });
+    });
+
+    return newStage;
+}

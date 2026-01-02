@@ -1,9 +1,18 @@
 import styled from "styled-components";
 
 const StyledCell = styled.div`
-  /* La taille vient de la grid (1fr/1fr) => on force un carré */
   width: 100%;
   aspect-ratio: 1 / 1;
+  background: ${(props) =>
+    props.type === 0 ? "rgba(255, 255, 255, 0.05)" : `rgba(${props.color}, 0.85)`};
+  border-radius: ${(props) =>
+    props.$isSpectrum ? "0" : props.type === 0 ? "0" : "4px"};
+  border: ${(props) =>
+    props.$isSpectrum
+      ? "none"
+      : props.type === 0
+      ? "1px solid rgba(255, 255, 255, 0.08)"
+      : `2px solid rgba(${props.color}, 0.35)`};
 
   /* Vide = transparent, penalty = gris foncé, sinon couleur */
   background: ${({ type, color }) =>

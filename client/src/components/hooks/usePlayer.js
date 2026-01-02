@@ -1,8 +1,6 @@
 import { useState, useCallback } from 'react';
 import { randomTetromino, TETROMINOS } from '../../tetrominos';
 import { checkCollision, STAGE_WIDTH } from '../../gameHelpers';
-import jsxRuntime from 'react/jsx-runtime';
-
 
 export const usePlayer = () => {
 
@@ -17,9 +15,16 @@ export const usePlayer = () => {
     });
 
     const rotate = (tetromino, dir) => {
-        const rotatedTetro = tetromino.map((_, index) => {
-            return tetromino.map((col) => { return col[index] });
-        });
+        const rotatedTetro = [];
+
+        for (let x = 0; x < tetromino[0].length; x++) {
+            const row = [];
+
+            for (let y = 0; y < tetromino.length; y++) {
+                row.push(tetromino[y][x]);
+            }
+            rotatedTetro.push(row);
+        }
 
         if (dir > 0)
             return rotatedTetro.map(row => row.reverse());
@@ -37,20 +42,19 @@ export const usePlayer = () => {
             const pos = clonedPlayer.pos.x;
             let offset = 1;
             while (checkCollision(clonedPlayer, stage, { x: 0, y: 0 })) {   // tant qu'il y a collision à la position actuelle
-                    console.log('Collision détectée, offset actuel :', offset, 'pos.x :', clonedPlayer.pos.x);
-                    clonedPlayer.pos.x += offset;                               // tente un décalage horizontal (wall kick) avec l'offset courant
-                    console.log('Décalage appliqué, nouvelle pos.x :', clonedPlayer.pos.x);
-                    offset = -(offset + (offset > 0 ? 1 : -1));                 // alterne le signe et augmente progressivement l'offset (1, -2, 3, -4…)
-                    console.log('Nouvel offset calculé :', offset);
-                    if (offset > clonedPlayer.tetromino[0].length) {            // si on a dépassé la largeur de la pièce en essais de décalage
-                        console.log('Aucun décalage possible, on annule la rotation');
-                        rotate(clonedPlayer.tetromino, -dir);                  // annule la rotation en la refaisant dans l'autre sens
-                        clonedPlayer.pos.x = pos;                         // remet la position X d'origine
-                        console.log('Position original : ', clonedPlayer.pos.x);
-
-                        return;                                    
-                    }
-                }    
+                console.log('Collision détectée, offset actuel :', offset, 'pos.x :', clonedPlayer.pos.x);
+                clonedPlayer.pos.x += offset;                               // tente un décalage horizontal (wall kick) avec l'offset courant
+                console.log('Décalage appliqué, nouvelle pos.x :', clonedPlayer.pos.x);
+                offset = -(offset + (offset > 0 ? 1 : -1));                 // alterne le signe et augmente progressivement l'offset (1, -2, 3, -4…)
+                console.log('Nouvel offset calculé :', offset);
+                if (offset > clonedPlayer.tetromino[0].length) {            // si on a dépassé la largeur de la pièce en essais de décalage
+                    console.log('Aucun décalage possible, on annule la rotation');
+                    rotate(clonedPlayer.tetromino, -dir);                  // annule la rotation en la refaisant dans l'autre sens
+                    clonedPlayer.pos.x = pos;                         // remet la position X d'origine
+                    console.log('Position original : ', clonedPlayer.pos.x);
+                    return;                                    
+                }
+            }    
             setPlayer(clonedPlayer);
         }
     }

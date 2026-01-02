@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { createStage } from '../../gameHelpers';
+import { createStage, drawPlayer } from '../../gameHelpers';
 
 export const useStage = (player, resetPlayer) => {
     
@@ -57,5 +57,13 @@ export const useStage = (player, resetPlayer) => {
         setStage(prev => updateStage(prev));
     },  [player, resetPlayer]);
 
-    return [stage, setStage, rowsCleared];
+    const drawPlayerSpectrum = (player) => {
+        const spectrumStage = createStage();
+
+        const playerSpectrum = drawPlayer(spectrumStage, player);
+
+        return playerSpectrum;
+    }
+
+    return [stage, setStage, rowsCleared, drawPlayerSpectrum];
 };  

@@ -11,6 +11,8 @@ import { useInterval } from './hooks/useInterval';
 import { StyledTetrisWrapper, StyledTetris } from './styles/StyledTetris';
 import { useGameStatus } from './hooks/useGameStatus';
 import { useParams, useNavigate } from "react-router";
+import { randomTetromino } from '../tetrominos';
+import Spectrums from './Spectrums';
 
 const Tetris = ({ socket, selectedGravity }) => {
     const { room } = useParams();
@@ -31,7 +33,25 @@ const Tetris = ({ socket, selectedGravity }) => {
 
     const [nextPieceStage, setNextPieceStage] = useState(createNextPieceStage());
     const navigate = useNavigate();
+    
+    const [playersSpectrums, setPlayersSpectrums] = useState();
+    const [otherPlayers, setOtherPlayers] = useState([
+        {
+            name: 'guest1',
+            pos: { x: 4, y: 1 },
+            score: 1,
+            tetromino: randomTetromino().shape,
+            collided: false,
+        }, 
+        {
+            name: 'guest2',
+            pos: { x: 4, y: 5 },
+            score: 3,
+            tetromino: randomTetromino().shape,
+            collided: false,
+        }
 
+    ]);
     useEffect(() => {
         if (socket && room) {
             socket.emit("join_game_room", { room, socketId: socket.id });
@@ -43,6 +63,8 @@ const Tetris = ({ socket, selectedGravity }) => {
             }
         };
     }, [socket, room]);
+
+
 
 
     const gravity = useMemo(() => ({
@@ -72,6 +94,16 @@ const Tetris = ({ socket, selectedGravity }) => {
         setScore(0);
         setRows(0);
         setLevel(0);
+
+        const players = []
+        for (let i = 0; i < otherPlayers.length; i++) {
+            const playerSpectrum = drawPlayersSpectrums(otherPlayers[i]);
+            players.push({ 
+                player: otherPlayers[i],
+                spectrum: playerSpectrum,
+            })
+        }
+        setPlayersSpectrums(players);
     }, []);
 
 
@@ -85,6 +117,15 @@ const Tetris = ({ socket, selectedGravity }) => {
         navigate("/");
 
     };
+
+    useEffect(() => {
+        if (playersSpectrums) {
+
+            playersSpectrums.map(( { player, spectrum}) => {
+                console.log(player, spectrum)
+            })
+        }
+    }, [playersSpectrums])
 
     const drop = () => {
         if (rows > (level + 1) * 10) {
@@ -207,8 +248,11 @@ const Tetris = ({ socket, selectedGravity }) => {
     return (
         <StyledTetrisWrapper role="button" tabIndex="0" onKeyDown={e => moove(e)}>
             <StyledTetris>
-                <Stage stage={stage} percentage={20} />
-                <aside>
+                <div className='left-side'>
+                    <Spectrums playersSpectrums={playersSpectrums} />
+                </div>
+                    <Stage stage={stage} percentage={20} border={'2px solid #333'} backgroundColor={'#000000ff'} isSpectrum={false} />
+                <div className='right-side'>
                     {gameOver ? (
                         <Display gameOver={gameOver} text="Game Over" />
                     ) : (
@@ -222,7 +266,7 @@ const Tetris = ({ socket, selectedGravity }) => {
                         </>
                    )}
                    
-                </aside>
+                </div>
             </StyledTetris>
 
             {/* Tableau des scores */}
