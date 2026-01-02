@@ -1,6 +1,6 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router";
+import { useParams, useNavigate, useLocation } from "react-router";
 import {
     StyledRoomWrapper,
     StyledRoom,
@@ -14,35 +14,62 @@ import {
 } from "./styles/StyledRoom";
 
 const Room = ({ socket, selectedGravity }) => {
-    // create the room name from the url params
-
     const params = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const [roomName, setRoomName] = useState(params.room);
     const [players, setPlayers] = useState([]);
-    const [player, setPlayer] = useState("");
+    const [player, setPlayer] = useState(null);
+    const [isOwner, setIsOwner] = useState(false);
+
+    const playerRef = useRef(player);
 
     useEffect(() => {
+        playerRef.current = player;
+    }, [player]);
+
+    useEffect(() => {
+        const playerNameFromState = location.state?.playerName;
+
         const joinRoom = () => {
             setRoomName(params.room);
             socket.emit("join_room", { room: params.room, socketId: socket.id });
+        };
+
+        const updateNameAndJoin = () => {
+            if (playerNameFromState) {
+                socket.emit("set_player_name", { socketId: socket.id, name: playerNameFromState }, () => {
+                    joinRoom();
+                    fetchPlayerInfo();
+                });
+            } else {
+                joinRoom();
+                fetchPlayerInfo();
+            }
         };
 
         const fetchPlayerInfo = () => {
             socket.emit("get_player_name", { socketId: socket.id }, (response) => {
                 if (response) {
                     setPlayer(response);
+                    if (response.owner) {
+                        setIsOwner(true);
+                    }
                 }
             });
         };
 
         const handlePlayersList = (playersList) => {
-            setPlayers(playersList);
+            const filteredPlayers = playersList.filter(p => p !== null && p !== undefined);
+            setPlayers(filteredPlayers);
+            const me = filteredPlayers.find(p => p.socketId === socket.id);
+            if (me && me.owner) {
+                setIsOwner(true);
+            }
         };
 
         const handleConnect = () => {
-            joinRoom();
-            fetchPlayerInfo();
+            updateNameAndJoin();
         };
 
         const handleBeforeUnload = () => {
@@ -52,24 +79,21 @@ const Room = ({ socket, selectedGravity }) => {
         };
 
         const handleYouAreOwner = (data) => {
-            setPlayer(prev => ({
-                ...prev,
-                owner: data.owner
-            }));
+            setIsOwner(data.owner);
         };
 
+        if (socket && socket.connected) {
+            updateNameAndJoin();
+        }
         socket.on("connect", handleConnect);
         socket.on("players_list_in_room", handlePlayersList);
         socket.on("you_are_owner", handleYouAreOwner);
         socket.on("game_started", () => {
-            navigate('/game');
+            navigate('/' + roomName + '/' + playerRef.current.name);
         });
         window.addEventListener("beforeunload", handleBeforeUnload);
 
-        if (socket && socket.connected) {
-            joinRoom();
-            fetchPlayerInfo();
-        }
+
 
         return () => {
             if (socket && socket.connected) {
@@ -83,7 +107,6 @@ const Room = ({ socket, selectedGravity }) => {
     }, [socket, params.room]);
 
     const handleStartGame = () => {
-        console.log("Starting game in room:", roomName);
         socket.emit("start_game", { gameRoom: roomName });
     };
 
@@ -113,7 +136,7 @@ const Room = ({ socket, selectedGravity }) => {
 
                 <StyledButtonGroup>
 
-                    {player && player.owner === true && (
+                    {isOwner && (
                         <>
                             <button className="start-button" onClick={handleStartGame}>
                                 Start Game
@@ -123,7 +146,7 @@ const Room = ({ socket, selectedGravity }) => {
                             </button>
                         </>
                     )}
-                    {player && player.owner === false && (
+                    {!isOwner && (
                         <>
                             <button className="leave-button" onClick={handleLeaveRoom}>
                                 Leave Room
@@ -141,7 +164,7 @@ const Room = ({ socket, selectedGravity }) => {
                         {players && players.length === 0 ? (
                             <p className="empty-message">Waiting for players...</p>
                         ) : (
-                            players.map((player, index) => (
+                                players.filter(p => p).map((player, index) => (
                                 <StyledPlayerItem key={index}>
                                     <div className="name">{player.name}</div>
                                     <StyledPlayerStatus isOwner={player.owner}>

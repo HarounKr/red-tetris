@@ -36,13 +36,12 @@ const Root = () => {
   const [selectedGravity, setSelectedGravity] = useState('Standard');
 
   useEffect(() => {
-    console.log(selectedGravity)
   }, [selectedGravity])
 
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/game" element={<App socket={socket} selectedGravity={selectedGravity} />} />
+        <Route path="/:room/:player" element={<App socket={socket} selectedGravity={selectedGravity} />} />
         <Route path="/" element={<Rooms socket={socket} selectedGravity={selectedGravity} setSelectedGravity={setSelectedGravity} />} />
         <Route path="/:room" element={<Room socket={socket} selectedGravity = {selectedGravity} />} />
       </Routes>

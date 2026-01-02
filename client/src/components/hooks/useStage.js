@@ -12,9 +12,11 @@ export const useStage = (player, resetPlayer) => {
 
         const sweepRows = (newStage) => {
             return newStage.reduce((ack, row) => {
-                if (row.findIndex(cell => cell[0] === 0) === -1) {
-                    setRowsCleared(prev => prev + 1);
+                const isComplete = row.findIndex(cell => cell[0] === 0) === -1;
+                const hasPenalty = row.findIndex(cell => cell[0] === 'P') !== -1;
 
+                if (isComplete && !hasPenalty) {
+                    setRowsCleared(prev => prev + 1);
                     ack.unshift(new Array(newStage[0].length).fill([0, 'clear']));
                     return ack;
                 }
@@ -24,12 +26,15 @@ export const useStage = (player, resetPlayer) => {
         }
 
         const updateStage = prevStage => {
-            // Clear cells marked as 'clear'
             const newStage = prevStage.map(row =>
-                row.map(cell => (cell[1] === 'clear' ? [0, 'clear'] : cell))
+                row.map(cell => {
+                    if (cell[1] === 'clear') {
+                        return [0, 'clear'];
+                    }
+                    return cell;
+                })
             );
 
-            // Draw the tetromino at the player's position
             player.tetromino.forEach((row, y) => {
                 row.forEach((value, x) => {
                     if (value !== 0) {
