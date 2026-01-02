@@ -4,14 +4,13 @@ import Stage from './Stage';
 import Display from './Display';
 import LeaveButtons from './LeaveButtons';
 import Scoreboard from './Scoreboard';
-import { createStage, checkCollision, createNextPieceStage } from '../gameHelpers';
+import { createStage, checkCollision } from '../gameHelpers';
 import { useStage } from './hooks/useStage';
 import { usePlayer } from './hooks/usePlayer';
 import { useInterval } from './hooks/useInterval';
 import { StyledTetrisWrapper, StyledTetris } from './styles/StyledTetris';
 import { useGameStatus } from './hooks/useGameStatus';
 import { useParams, useNavigate } from "react-router";
-import { randomTetromino } from '../tetrominos';
 import Spectrums from './Spectrums';
 
 const Tetris = ({ socket, selectedGravity }) => {
@@ -31,30 +30,14 @@ const Tetris = ({ socket, selectedGravity }) => {
     const currentRowsRef = useRef(0);
     const currentLevelRef = useRef(0);
 
-    const [nextPieceStage, setNextPieceStage] = useState(createNextPieceStage());
     const navigate = useNavigate();
     
     const [playersSpectrums, setPlayersSpectrums] = useState();
-    const [otherPlayers, setOtherPlayers] = useState([
-        {
-            name: 'guest1',
-            pos: { x: 4, y: 1 },
-            score: 1,
-            tetromino: randomTetromino().shape,
-            collided: false,
-        }, 
-        {
-            name: 'guest2',
-            pos: { x: 4, y: 5 },
-            score: 3,
-            tetromino: randomTetromino().shape,
-            collided: false,
-        }
-
-    ]);
+    const [otherPlayers, setOtherPlayers] = useState([]);
     useEffect(() => {
         if (socket && room) {
             socket.emit("join_game_room", { room, socketId: socket.id });
+            socket.emit("get_other_players", { room, socketId: socket.id });
         }
 
         return () => {
@@ -63,6 +46,22 @@ const Tetris = ({ socket, selectedGravity }) => {
             }
         };
     }, [socket, room]);
+
+    useEffect(() => {
+        if (socket && room && player && !gameOver) {
+            socket.emit("update_player_state", {
+                room,
+                socketId: socket.id,
+                playerData: {
+                    pos: player.pos,
+                    score,
+                    tetromino: player.tetromino,
+                    collided: player.collided,
+                    stage
+                }
+            });
+        }
+    }, [player, score, stage, socket, room, gameOver]);
 
 
 
@@ -94,17 +93,23 @@ const Tetris = ({ socket, selectedGravity }) => {
         setScore(0);
         setRows(0);
         setLevel(0);
-
-        const players = []
-        for (let i = 0; i < otherPlayers.length; i++) {
-            const playerSpectrum = drawPlayersSpectrums(otherPlayers[i]);
-            players.push({ 
-                player: otherPlayers[i],
-                spectrum: playerSpectrum,
-            })
-        }
-        setPlayersSpectrums(players);
     }, []);
+
+    useEffect(() => {
+        if (otherPlayers.length > 0) {
+            const players = otherPlayers.map(p => ({
+                player: {
+                    name: p.name,
+                    score: p.score,
+                    socketId: p.socketId
+                },
+                spectrum: p.stage && p.stage.length > 0 ? p.stage : createStage()
+            }));
+            setPlayersSpectrums(players);
+        } else {
+            setPlayersSpectrums([]);
+        }
+    }, [otherPlayers]);
 
 
 
@@ -205,12 +210,34 @@ const Tetris = ({ socket, selectedGravity }) => {
         socket.on("you_are_owner", handleYouAreOwner);
         socket.on("restart_game", handleRestartGame);
 
+        const handleOtherPlayersUpdate = ({ players }) => {
+            setOtherPlayers(players);
+        };
+
+        const handlePlayerStateUpdate = (playerData) => {
+            setOtherPlayers(prev => {
+                const existingIndex = prev.findIndex(p => p.socketId === playerData.socketId);
+                if (existingIndex !== -1) {
+                    const updated = [...prev];
+                    updated[existingIndex] = playerData;
+                    return updated;
+                } else {
+                    return [...prev, playerData];
+                }
+            });
+        };
+
+        socket.on("other_players_update", handleOtherPlayersUpdate);
+        socket.on("player_state_update", handlePlayerStateUpdate);
+
         return () => {
             socket.off("opponent_game_over", handleOpponentGameOver);
             socket.off("add_penalty_rows", handlePenaltyRows);
             socket.off("final_scores", handleFinalScores);
             socket.off("you_are_owner", handleYouAreOwner);
             socket.off("restart_game", handleRestartGame);
+            socket.off("other_players_update", handleOtherPlayersUpdate);
+            socket.off("player_state_update", handlePlayerStateUpdate);
         };
     }, [socket, setStage, room, navigate]);
 
@@ -254,7 +281,7 @@ const Tetris = ({ socket, selectedGravity }) => {
                     <Stage stage={stage} percentage={20} border={'2px solid #333'} backgroundColor={'#000000ff'} isSpectrum={false} />
                 <div className='right-side'>
                     {gameOver ? (
-                        <Display gameOver={gameOver} text="Game Over" />
+                        <></>
                     ) : (
                         <>
                             <div>
