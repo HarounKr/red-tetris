@@ -38,9 +38,11 @@ export const StyledTetris = styled.div`
     }
 
     .right-side {
+        display: flex;
+        flex-direction: column;
         width: 100%;
+        gap: 20px;
         max-width: 200px;
-        display: block;
         padding: 0 20px;
     }
 `

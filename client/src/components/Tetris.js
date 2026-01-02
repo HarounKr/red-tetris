@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Stage from './Stage';
 import Display from './Display';
 import LeaveButtons from './LeaveButtons';
-import { createStage, checkCollision, createNextPieceStage } from '../gameHelpers';
+import { createStage, checkCollision, STAGE_HEIGHT, STAGE_WIDTH } from '../gameHelpers';
 import { useStage } from './hooks/useStage';
 import { usePlayer } from './hooks/usePlayer';
 import { useInterval } from './hooks/useInterval';
@@ -12,14 +12,16 @@ import { useGameStatus } from './hooks/useGameStatus';
 import { randomTetromino } from '../tetrominos';
 import Spectrums from './Spectrums';
 
+
 const Tetris = (selectedGravity) => {
 
     const [gameOver, setGameOver] = useState(false);
     const [dropTime, setDropTime] = useState(null);
     const [player, updatePlayerPos, resetPlayer, nextRandomShape, playerRotate] = usePlayer(null);
-    const [stage, setStage, rowsCleared, drawPlayersSpectrums] = useStage(player, resetPlayer, gameOver);
+    const [stage, setStage, rowsCleared, drawPlayersSpectrums, drawNextTetrominoShape] = useStage(player, resetPlayer, gameOver);
     const [level, setLevel, rows, setRows, score, setScore] = useGameStatus(rowsCleared);
     const [playersSpectrums, setPlayersSpectrums] = useState();
+    const [nextTetrominoShape, setNextTetrominoShape] = useState();
     const [otherPlayers, setOtherPlayers] = useState([
         {
             name: 'guest1',
@@ -54,7 +56,7 @@ const Tetris = (selectedGravity) => {
     };
 
     useEffect(() => {
-        setStage(createStage());
+        setStage(createStage(STAGE_HEIGHT, STAGE_WIDTH));
         const initialDrop = gravity[selectedGravity] || gravity.Standard;
         console.log(initialDrop)
         setDropTime(initialDrop);
@@ -62,8 +64,11 @@ const Tetris = (selectedGravity) => {
         setScore(0);
         setRows(0);
         setLevel(0);
+    }, []);
 
+    useEffect(() => {
         const players = []
+
         for (let i = 0; i < otherPlayers.length; i++) {
             const playerSpectrum = drawPlayersSpectrums(otherPlayers[i]);
             players.push({ 
@@ -72,22 +77,23 @@ const Tetris = (selectedGravity) => {
             })
         }
         setPlayersSpectrums(players);
-    }, []);
+    }, [otherPlayers]);
 
+    useEffect(() => {
+        setNextTetrominoShape(drawNextTetrominoShape(nextRandomShape));
+
+        console.log()
+
+    }, [nextRandomShape])
+
+    useEffect(() => {
+        console.log("nextTetrominoShape : ", nextTetrominoShape);
+    }, [nextTetrominoShape])
 
     const leaveGame = () => {
         //leave game
         
     };
-
-    useEffect(() => {
-        if (playersSpectrums) {
-
-            playersSpectrums.map(( { player, spectrum}) => {
-                console.log(player, spectrum)
-            })
-        }
-    }, [playersSpectrums])
 
     const drop = () => {
         if (rows > (level + 1) * 10) {
@@ -140,18 +146,19 @@ const Tetris = (selectedGravity) => {
                 <div className='left-side'>
                     <Spectrums playersSpectrums={playersSpectrums} />
                 </div>
-                    <Stage stage={stage} percentage={20} border={'2px solid #333'} backgroundColor={'#000000ff'} isSpectrum={false} />
+                <Stage stage={stage} percentage={20} border={'2px solid #333'} backgroundColor={'#000000ff'} isSpectrum={false} />
                 <div className='right-side'>
                     {gameOver ? (
                         <Display gameOver={gameOver} text="Game Over" />
                     ) : (
                         <>
-                            <div>
+                            
                                 <Display text={"Score " + score}/>
                                 <Display text={"Rows " + rows} />
                                 <Display text={"Level " + level } />
-                            </div>
-                            <LeaveButtons callback={leaveGame}/> 
+                            
+                            <Stage stage={nextTetrominoShape} percentage={4.5} border={'2px solid #333'} backgroundColor={'#000000ff'} isSpectrum={false} />
+                            <LeaveButtons callback={leaveGame}/>
                         </>
                    )}
                    

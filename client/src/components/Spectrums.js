@@ -3,7 +3,6 @@ import Stage from "./Stage";
 
 const Spectrums = ( {playersSpectrums}) => {
 
-    console.log(playersSpectrums)
     return (
         <>
            {playersSpectrums?.map(({ player, spectrum }, index) => (

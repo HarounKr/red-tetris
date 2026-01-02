@@ -21,9 +21,6 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 const Root = () => {
   const [selectedGravity, setSelectedGravity] = useState('Standard');
 
-  useEffect(() => {
-    console.log(selectedGravity)
-  }, [selectedGravity])
 
   return (
     <BrowserRouter>

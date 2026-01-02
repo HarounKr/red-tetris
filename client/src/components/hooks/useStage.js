@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { createStage, drawPlayer } from '../../gameHelpers';
+import { createStage, drawPlayer, STAGE_HEIGHT, STAGE_WIDTH } from '../../gameHelpers';
 
 export const useStage = (player, resetPlayer) => {
     
-    const [stage, setStage] = useState(createStage());
+    const [stage, setStage] = useState(createStage(STAGE_HEIGHT, STAGE_WIDTH));
     const [rowsCleared, setRowsCleared] = useState(0);
+
 
     useEffect(() => {
 
@@ -38,12 +39,30 @@ export const useStage = (player, resetPlayer) => {
     },  [player, resetPlayer]);
 
     const drawPlayerSpectrum = (player) => {
-        const spectrumStage = createStage();
+        const spectrumStage = createStage(STAGE_HEIGHT, STAGE_WIDTH);
 
         const playerSpectrum = drawPlayer(spectrumStage, player);
 
         return playerSpectrum;
     }
 
-    return [stage, setStage, rowsCleared, drawPlayerSpectrum];
+    const drawNextTetrominoShape = (nextRandomShape) => {
+
+        const hasO = nextRandomShape.some(row => row.includes('O'));
+        const x = hasO ? 1 : 0;
+        
+        const shapeStage = createStage(4, 4);
+
+        const player = {
+            pos: { x: x, y: 1 },
+            tetromino: nextRandomShape,
+            collided: false,
+        }
+
+        const nextShapeStage = drawPlayer(shapeStage, player);
+
+        return nextShapeStage;
+    }
+
+    return [stage, setStage, rowsCleared, drawPlayerSpectrum, drawNextTetrominoShape];
 };  

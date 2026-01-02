@@ -1,13 +1,13 @@
 export const STAGE_WIDTH = 10;
 export const STAGE_HEIGHT = 20;
 
-export const createStage = () => {
+export const createStage = (stage_height, stage_width) => {
     const stage =[];
 
-    for (let i = 0; i < STAGE_HEIGHT; i++) {
+    for (let i = 0; i < stage_height; i++) {
         const row = [];
 
-        for (let j = 0; j < STAGE_WIDTH; j++) {
+        for (let j = 0; j < stage_width; j++) {
             const cell = [0, 'clear'];
             row.push(cell);
         }
