@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 
 import {
+  StyledMainLayout,
   StyledRoomsWrapper,
   StyledRooms,
   StyledPlayerInfo,
@@ -14,7 +15,8 @@ import {
   StyledRoomItem,
   StyledPlayerItem,
   ReturnNav,
-  StyledGravitySelector
+  StyledGravitySelector,
+  StyledAllScoreboards
 } from "./styles/styledRooms";
 
 const Rooms = ({ socket, selectedGravity, setSelectedGravity }) => {
@@ -128,62 +130,69 @@ const Rooms = ({ socket, selectedGravity, setSelectedGravity }) => {
     };
 
   return (
-    <StyledRoomsWrapper>
-      <StyledPlayerInfo isConnected={socket?.connected}>
-        <div className="status-dot"></div>
-        <span>{playerName}</span>
-      </StyledPlayerInfo>
+    <StyledMainLayout>
+      <StyledRoomsWrapper>
+        <StyledPlayerInfo isConnected={socket?.connected}>
+          <div className="status-dot"></div>
+          <span>{playerName}</span>
+        </StyledPlayerInfo>
 
-      <StyledRooms>
-        <h1>Red Tetris</h1>
+        <StyledRooms>
+          <h1>Red Tetris</h1>
 
-        <StyledCreateRoomSection>
-          <div className="room-row">
-            <input
-              type="text"
-              id="name"
-              placeholder="Enter room name (letters only)..."
-              value={name}
-              onChange={handleNameChange}
-            />
-            <button onClick={handleNameSubmit}>Create Room</button>
-          </div>
-        </StyledCreateRoomSection>
+          <StyledCreateRoomSection>
+            <div className="room-row">
+              <input
+                type="text"
+                id="name"
+                placeholder="Enter room name (letters only)..."
+                value={name}
+                onChange={handleNameChange}
+              />
+              <button onClick={handleNameSubmit}>Create Room</button>
+            </div>
+          </StyledCreateRoomSection>
 
-        {error && <StyledErrorMessage>{error}</StyledErrorMessage>}
+          {error && <StyledErrorMessage>{error}</StyledErrorMessage>}
 
-        <StyledGridContainer>
-          <StyledSection>
-            <h2>Available Rooms</h2>
-            <StyledList>
-              {rooms.length === 0 ? (
-                <p className="empty-message">No rooms available. Create one!</p>
-              ) : (
-                rooms.map((room, index) => (
-                  <StyledRoomItem key={index}>
-                    <span className="room-name">{room}</span>
-                    <button onClick={() => navigate(`/${room}`)}>Join</button>
-                  </StyledRoomItem>
-                ))
-              )}
-            </StyledList>
-          </StyledSection>
+          <StyledGridContainer>
+            <StyledSection>
+              <h2>Available Rooms</h2>
+              <StyledList>
+                {rooms.length === 0 ? (
+                  <p className="empty-message">No rooms available. Create one!</p>
+                ) : (
+                  rooms.map((room, index) => (
+                    <StyledRoomItem key={index}>
+                      <span className="room-name">{room}</span>
+                      <button onClick={() => navigate(`/${room}`)}>Join</button>
+                    </StyledRoomItem>
+                  ))
+                )}
+              </StyledList>
+            </StyledSection>
 
-          <StyledSection>
-            <h2>Players Online ({players.length})</h2>
-            <StyledList>
-              {players.length === 0 ? (
-                <p className="empty-message">No players connected.</p>
-              ) : (
-                players.map((player, index) => (
-                  <StyledPlayerItem key={index}>{player}</StyledPlayerItem>
-                ))
-              )}
-            </StyledList>
-          </StyledSection>
-        </StyledGridContainer>
-      </StyledRooms>
-    </StyledRoomsWrapper>
+            <StyledSection>
+              <h2>Players Online ({players.length})</h2>
+              <StyledList>
+                {players.length === 0 ? (
+                  <p className="empty-message">No players connected.</p>
+                ) : (
+                  players.map((player, index) => (
+                    <StyledPlayerItem key={index}>{player}</StyledPlayerItem>
+                  ))
+                )}
+              </StyledList>
+            </StyledSection>
+          </StyledGridContainer>
+        </StyledRooms>
+      </StyledRoomsWrapper>
+
+      <StyledAllScoreboards>
+        <h1>Scoreboards</h1>
+        <p className="empty-message">No games played yet</p>
+      </StyledAllScoreboards>
+    </StyledMainLayout>
   );
 };
 

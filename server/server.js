@@ -36,12 +36,20 @@ room = {
     players: []
 };
 
+function generaterandomNamewithonlyletters() {
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    let name = '';
+    for (let i = 0; i < 5; i++) {
+        name += letters.charAt(Math.floor(Math.random() * letters.length));
+    }
+    return name;
+}
 users = [];
 
 rooms = [];
 io.on("connection", (socket) => {
     let user = {
-        name: "guest " + Math.floor(Math.random() * 1000),
+        name: generaterandomNamewithonlyletters(),
         socketId: socket.id,
         owner: false,
         TetrisMap: [],
@@ -199,11 +207,27 @@ io.on("connection", (socket) => {
     });
 
     socket.on("disconnect", () => {
-        users = users.filter((user) => user.socketId !== socket.id);
+        const disconnectedSocketId = socket.id;
+        users = users.filter((user) => user.socketId !== disconnectedSocketId);
+
         rooms.forEach((room) => {
             socket.leave(room.name);
-            room.players = room.players.filter((p) => p.socketId !== socket.id);
+            const wasInRoom = room.players.some(p => p.socketId === disconnectedSocketId);
+            room.players = room.players.filter((p) => p.socketId !== disconnectedSocketId);
             io.to(room.name).emit("players_list_in_room", room.players);
+
+            if (wasInRoom && room.players.length > 0) {
+                const otherPlayersData = room.players.map(p => ({
+                    name: p.name,
+                    socketId: p.socketId,
+                    score: p.score || 0,
+                    stage: p.stage || []
+                }));
+                room.players.forEach(p => {
+                    const playersForThisSocket = otherPlayersData.filter(op => op.socketId !== p.socketId);
+                    io.to(p.socketId).emit("other_players_update", { players: playersForThisSocket });
+                });
+            }
         });
         rooms = rooms.filter((room) => room.players.length > 0);
         io.emit("players_list", users.map((user) => user.name).filter((name) => name !== null));
@@ -251,6 +275,19 @@ io.on("connection", (socket) => {
             if (roomObj.players.length === 0 && roomObj.start) {
                 rooms = rooms.filter((r) => r.name !== room);
                 io.emit("rooms_list", rooms.filter((r) => !r.start).map((r) => r.name));
+            } else if (roomObj.players.length > 0) {
+                // Notify remaining players about the updated player list (for spectrums)
+                const otherPlayersData = roomObj.players.map(p => ({
+                    name: p.name,
+                    socketId: p.socketId,
+                    score: p.score || 0,
+                    stage: p.stage || []
+                }));
+                // Send to each remaining player their updated "other players" list
+                roomObj.players.forEach(p => {
+                    const playersForThisSocket = otherPlayersData.filter(op => op.socketId !== p.socketId);
+                    io.to(p.socketId).emit("other_players_update", { players: playersForThisSocket });
+                });
             }
         }
     });
@@ -375,9 +412,8 @@ io.on("connection", (socket) => {
         const socketsInRoom = io.sockets.adapter.rooms.get(room);
 
         let penaltyRows = 0;
-        if (rows === 2) penaltyRows = 1;
-        else if (rows === 3) penaltyRows = 2;
-        else if (rows >= 4) penaltyRows = 4;
+        if (rows >= 2) penaltyRows = rows - 1;
+
 
         if (penaltyRows > 0) {
             socket.to(room).emit("add_penalty_rows", {
