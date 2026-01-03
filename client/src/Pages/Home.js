@@ -1,7 +1,6 @@
 import React from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { StyledHomeWrapper, StyledHome } from "./styles/StyledHome";
 
 const Home = ({ socket }) => {
     let navigate = useNavigate();
@@ -19,14 +18,13 @@ const Home = ({ socket }) => {
     };
 
   return (
-    <StyledHomeWrapper>
-      <StyledHome>
-        <h1>Red Tetris</h1>
-        <input type="text" id="name" placeholder="Enter your name" value={name} onChange={(e) => setName(e.target.value)} />
-        <button onClick={handleNameSubmit}>Start Game</button>
-        {error && <p style={{ color: "red" }}>{error}</p>}
-      </StyledHome>
-    </StyledHomeWrapper>
+    <div>
+      <h1>Welcome to Tetris Game</h1>
+      <label htmlFor="name">Please enter your name:</label>
+      <input type="text" id="name" placeholder="Enter your name" value={name} onChange={(e) => setName(e.target.value)} />
+      <button onClick={handleNameSubmit}>Start Game</button>
+      {error && <p style={{ color: "red" }}>{error}</p>}
+    </div>
   );
 };
 

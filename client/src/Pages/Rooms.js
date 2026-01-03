@@ -40,10 +40,21 @@ const Rooms = ({ socket, selectedGravity, setSelectedGravity }) => {
       });
     };
 
+    const applyStoredPlayerName = () => {
+      const storedName = sessionStorage.getItem('playerName');
+      if (storedName) {
+        socket.emit("set_player_name", { socketId: socket.id, name: storedName }, () => {
+          setPlayerName(storedName);
+        });
+      } else {
+        fetchPlayerName();
+      }
+    };
+
     const initializeRoom = () => {
         socket.emit("get_rooms");
         socket.emit("get_players");
-      fetchPlayerName();
+      applyStoredPlayerName();
     };
 
     if (socket && socket.connected) {
@@ -90,12 +101,28 @@ const Rooms = ({ socket, selectedGravity, setSelectedGravity }) => {
             sessionStorage.removeItem("wasOnRoomPage");
         };
   }, [socket, navigate]); 
-    
+
+  const isValidName = (value) => {
+    if (!value) return false;
+    return /^[a-zA-Z]+$/.test(value);
+  };
+
+  const handleNameChange = (e) => {
+    const value = e.target.value;
+    const filteredValue = value.replace(/[^a-zA-Z]/g, '');
+    setName(filteredValue);
+    if (error) setError(null);
+  };
+
     const handleNameSubmit = () => {
         if (!name) {
             setError("Room name is required");
             return;
         }
+      if (!isValidName(name)) {
+        setError("Room name must contain only letters (no numbers or spaces)");
+        return;
+      }
       setError(null);
         navigate(`/${name}`);
     };
@@ -115,27 +142,12 @@ const Rooms = ({ socket, selectedGravity, setSelectedGravity }) => {
             <input
               type="text"
               id="name"
-              placeholder="Enter room name..."
+              placeholder="Enter room name (letters only)..."
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={handleNameChange}
             />
             <button onClick={handleNameSubmit}>Create Room</button>
           </div>
-
-          <StyledGravitySelector>
-            <div className="options">
-              {gravityOptions.map((option) => (
-                <label key={option.value} className="option">
-                  <input
-                    type="checkbox"
-                    checked={selectedGravity === option.value}
-                    onChange={() => setSelectedGravity && setSelectedGravity(option.value)}
-                  />
-                  <span className="label">{option.label}</span>
-                </label>
-              ))}
-            </div>
-          </StyledGravitySelector>
         </StyledCreateRoomSection>
 
         {error && <StyledErrorMessage>{error}</StyledErrorMessage>}

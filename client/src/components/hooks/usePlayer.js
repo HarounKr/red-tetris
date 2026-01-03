@@ -1,15 +1,27 @@
-import { useState, useCallback } from 'react';
-import { randomTetromino, TETROMINOS } from '../../tetrominos';
+import { useState, useCallback, useRef } from 'react';
+import { TETROMINOS } from '../../tetrominos';
 import { checkCollision, STAGE_WIDTH } from '../../gameHelpers';
 
-export const usePlayer = () => {
+export const usePlayer = (sharedSequence = null) => {
 
-    const getRandomShape = () => randomTetromino().shape
+    const sequenceIndexRef = useRef(0);
 
-    const [nextRandomShape, setNextRandomShape] = useState(getRandomShape());
+    const getNextTetromino = () => {
+        if (sharedSequence && sharedSequence.length > 0) {
+            const index = sequenceIndexRef.current;
+            const tetrominoKey = sharedSequence[index % sharedSequence.length];
+            sequenceIndexRef.current += 1;
+            return TETROMINOS[tetrominoKey].shape;
+        }
+        const tetrominos = 'IJLOSTZ';
+        const random = tetrominos[Math.floor(Math.random() * tetrominos.length)];
+        return TETROMINOS[random].shape;
+    };
+
+    const [nextRandomShape, setNextRandomShape] = useState(() => getNextTetromino());
 
     const [player, setPlayer] = useState({
-        pos: { x: STAGE_WIDTH / 2 - Math.floor(nextRandomShape.length / 2), y: 0 },
+        pos: { x: STAGE_WIDTH / 2 - 2, y: 0 },
         tetromino: TETROMINOS[0].shape,
         collided: false,
     });
@@ -30,7 +42,7 @@ export const usePlayer = () => {
             return rotatedTetro.map(row => row.reverse());
 
         return rotatedTetro.reverse();
-    }
+    };
 
     const playerRotate = (stage, dir) => {
         const hasO = player.tetromino.some(row => row.includes('O'));
@@ -41,23 +53,18 @@ export const usePlayer = () => {
 
             const pos = clonedPlayer.pos.x;
             let offset = 1;
-            while (checkCollision(clonedPlayer, stage, { x: 0, y: 0 })) {   // tant qu'il y a collision à la position actuelle
-                console.log('Collision détectée, offset actuel :', offset, 'pos.x :', clonedPlayer.pos.x);
-                clonedPlayer.pos.x += offset;                               // tente un décalage horizontal (wall kick) avec l'offset courant
-                console.log('Décalage appliqué, nouvelle pos.x :', clonedPlayer.pos.x);
-                offset = -(offset + (offset > 0 ? 1 : -1));                 // alterne le signe et augmente progressivement l'offset (1, -2, 3, -4…)
-                console.log('Nouvel offset calculé :', offset);
-                if (offset > clonedPlayer.tetromino[0].length) {            // si on a dépassé la largeur de la pièce en essais de décalage
-                    console.log('Aucun décalage possible, on annule la rotation');
-                    rotate(clonedPlayer.tetromino, -dir);                  // annule la rotation en la refaisant dans l'autre sens
-                    clonedPlayer.pos.x = pos;                         // remet la position X d'origine
-                    console.log('Position original : ', clonedPlayer.pos.x);
+            while (checkCollision(clonedPlayer, stage, { x: 0, y: 0 })) {
+                clonedPlayer.pos.x += offset;
+                offset = -(offset + (offset > 0 ? 1 : -1));
+                if (offset > clonedPlayer.tetromino[0].length) {
+                    rotate(clonedPlayer.tetromino, -dir);
+                    clonedPlayer.pos.x = pos;
                     return;                                    
                 }
             }    
             setPlayer(clonedPlayer);
         }
-    }
+    };
 
     const updatePlayerPos = ({ x, y, collided }) => {
         setPlayer(prev => ({
@@ -75,9 +82,13 @@ export const usePlayer = () => {
             tetromino: nextRandomShape,
             collided: false,
         });
-        setNextRandomShape(getRandomShape());
+        setNextRandomShape(getNextTetromino());
 
-    }, [nextRandomShape]);
+    }, [nextRandomShape, sharedSequence]);
 
-    return [player, updatePlayerPos, resetPlayer, nextRandomShape, playerRotate];
-}
+    const resetSequenceIndex = useCallback(() => {
+        sequenceIndexRef.current = 0;
+    }, []);
+
+    return [player, updatePlayerPos, resetPlayer, nextRandomShape, playerRotate, resetSequenceIndex];
+};
