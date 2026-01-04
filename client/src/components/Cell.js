@@ -4,8 +4,9 @@ import { TETROMINOS } from "../tetrominos";
 
 const Cell = ( { type, isSpectrum }) => {
 
-    const color = isSpectrum ? '255, 229, 204' : TETROMINOS[type].color
-
+    const color = isSpectrum
+        ? '255, 229, 204'
+        : (TETROMINOS[type]?.color || '0, 0, 0')
     return (
         <StyledCell type={type} color={color} $isSpectrum={isSpectrum}>
             

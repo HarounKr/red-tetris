@@ -21,9 +21,9 @@ export const StyledTetris = styled.div`
         display: flex;
         flex-direction: column;
         width: 100%;
-        max-width: 120px;
+        max-width: 100px;
         padding: 0 20px;
-        color: white;
+        color:white;
         gap: 20px;
         font-size: 15px;
 
@@ -31,18 +31,18 @@ export const StyledTetris = styled.div`
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 8px;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 10px;
-            border-radius: 10px;
-            border: 2px solid rgba(255, 255, 255, 0.1);
+            gap: 10px;
+            backgrourgba(158, 26, 26, 1)f3ff;
+
         }
     }
 
     .right-side {
+        display: flex;
+        flex-direction: column;
         width: 100%;
+        gap: 20px;
         max-width: 200px;
-        display: block;
         padding: 0 20px;
     }
 `

@@ -3,7 +3,6 @@ import { TETROMINOS } from '../../tetrominos';
 import { checkCollision, STAGE_WIDTH } from '../../gameHelpers';
 
 export const usePlayer = (sharedSequence = null) => {
-
     const sequenceIndexRef = useRef(0);
 
     const getNextTetromino = () => {
@@ -21,36 +20,30 @@ export const usePlayer = (sharedSequence = null) => {
     const [nextRandomShape, setNextRandomShape] = useState(() => getNextTetromino());
 
     const [player, setPlayer] = useState({
-        pos: { x: STAGE_WIDTH / 2 - 2, y: 0 },
+        pos: { x: STAGE_WIDTH / 2 - Math.floor(nextRandomShape.length / 2), y: 0 },
         tetromino: TETROMINOS[0].shape,
         collided: false,
     });
 
     const rotate = (tetromino, dir) => {
         const rotatedTetro = [];
-
         for (let x = 0; x < tetromino[0].length; x++) {
             const row = [];
-
             for (let y = 0; y < tetromino.length; y++) {
                 row.push(tetromino[y][x]);
             }
             rotatedTetro.push(row);
         }
-
         if (dir > 0)
             return rotatedTetro.map(row => row.reverse());
-
         return rotatedTetro.reverse();
     };
 
     const playerRotate = (stage, dir) => {
         const hasO = player.tetromino.some(row => row.includes('O'));
-
         if (!hasO) {
             const clonedPlayer = JSON.parse(JSON.stringify(player));    
             clonedPlayer.tetromino = rotate(clonedPlayer.tetromino, dir);
-
             const pos = clonedPlayer.pos.x;
             let offset = 1;
             while (checkCollision(clonedPlayer, stage, { x: 0, y: 0 })) {
@@ -76,14 +69,12 @@ export const usePlayer = (sharedSequence = null) => {
 
     const resetPlayer = useCallback(() => {
         let x = STAGE_WIDTH / 2 - Math.floor(nextRandomShape.length / 2);
-
         setPlayer({
             pos: { x: x, y: 0 },
             tetromino: nextRandomShape,
             collided: false,
         });
         setNextRandomShape(getNextTetromino());
-
     }, [nextRandomShape, sharedSequence]);
 
     const resetSequenceIndex = useCallback(() => {

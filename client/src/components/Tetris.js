@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 
 import Stage from './Stage';
@@ -5,7 +7,7 @@ import Display from './Display';
 import LeaveButtons from './LeaveButtons';
 import Scoreboard from './Scoreboard';
 import NextPiece from './NextPiece';
-import { createStage, checkCollision } from '../gameHelpers';
+import { createStage, checkCollision, STAGE_HEIGHT, STAGE_WIDTH } from '../gameHelpers';
 import { useStage } from './hooks/useStage';
 import { usePlayer } from './hooks/usePlayer';
 import { useInterval } from './hooks/useInterval';
@@ -24,11 +26,12 @@ const Tetris = ({ socket, selectedGravity }) => {
 
     const [tetrominoSequence, setTetrominoSequence] = useState(location.state?.tetrominoSequence || null);
     const gameModeFromState = location.state?.gameMode || selectedGravity || 'Standard';
+    const [nextTetrominoShape, setNextTetrominoShape] = useState();
 
     const [gameOver, setGameOver] = useState(false);
     const [dropTime, setDropTime] = useState(null);
     const [player, updatePlayerPos, resetPlayer, nextRandomShape, playerRotate, resetSequenceIndex] = usePlayer(tetrominoSequence);
-    const [stage, setStage, rowsCleared] = useStage(player, resetPlayer, gameOver);
+    const [stage, setStage, rowsCleared, drawPlayersSpectrums, drawNextTetrominoShape] = useStage(player, resetPlayer, gameOver);
     const [level, setLevel, rows, setRows, score, setScore] = useGameStatus(rowsCleared, socket, room);
     const [showScoreboard, setShowScoreboard] = useState(false);
     const [finalScores, setFinalScores] = useState([]);
@@ -145,11 +148,21 @@ const Tetris = ({ socket, selectedGravity }) => {
             updatePlayerPos({ x: dir, y: 0 });
         }
     };
+    useEffect(() => {
+        setNextTetrominoShape(drawNextTetrominoShape(nextRandomShape));
+
+        console.log()
+
+    }, [nextRandomShape])
+
+    useEffect(() => {
+        console.log("nextTetrominoShape : ", nextTetrominoShape);
+    }, [nextTetrominoShape]);
 
     useEffect(() => {
         if (!accessAllowed) return;
 
-        setStage(createStage());
+        setStage(createStage(STAGE_HEIGHT, STAGE_WIDTH));
         const initialDrop = gravity[gameModeFromState] || gravity.Standard;
         setDropTime(initialDrop);
         resetPlayer();
@@ -157,6 +170,7 @@ const Tetris = ({ socket, selectedGravity }) => {
         setRows(0);
         setLevel(0);
     }, [accessAllowed, gameModeFromState, gravity]);
+
 
     useEffect(() => {
         const currentPlayerSpectrum = {
@@ -432,14 +446,13 @@ const Tetris = ({ socket, selectedGravity }) => {
                     {gameOver ? (
                         <></>
                     ) : (
-                        <>
-                                <NextPiece nextShape={nextRandomShape} />
-                            <div>
-                                <Display text={"Score " + score}/>
+                            <>
+                                <Display text={"Score " + score} />
                                 <Display text={"Rows " + rows} />
-                                <Display text={"Level " + level } />
-                            </div>
-                            <LeaveButtons callback={leaveGame}/> 
+                                <Display text={"Level " + level} />
+                                <Stage stage={nextTetrominoShape} percentage={4.5} border={'2px solid #333'} backgroundColor={'#000000ff'} isSpectrum={false} />
+                                <LeaveButtons callback={leaveGame} />
+
                         </>
                     )}
                 </div>
