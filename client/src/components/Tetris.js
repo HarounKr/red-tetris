@@ -173,26 +173,33 @@ const Tetris = ({ socket, selectedGravity }) => {
 
 
     useEffect(() => {
-        const currentPlayerSpectrum = {
+        if (!otherPlayers || !Array.isArray(otherPlayers)) {
+            setPlayersSpectrums([]);
+            return;
+        }
+        // Always show your own spectrum
+        const spectrums = [{
             player: {
                 name: 'You',
                 score: score,
                 socketId: socket?.id
             },
             spectrum: stage
-        };
-
-
-        const players = otherPlayers.map(p => ({
-            player: {
-                name: p.name,
-                score: p.score || 0,
-                socketId: p.socketId
-            },
-            spectrum: p.stage && p.stage.length > 0 ? p.stage : createStage()
-        }));
-
-        setPlayersSpectrums([currentPlayerSpectrum, ...players]);
+        }];
+        // Add spectrums for all other players in the room
+        otherPlayers.forEach(p => {
+            if (p.socketId !== socket?.id) {
+                spectrums.push({
+                    player: {
+                        name: p.name,
+                        score: p.score || 0,
+                        socketId: p.socketId
+                    },
+                    spectrum: p.stage && p.stage.length > 0 ? p.stage : createStage()
+                });
+            }
+        });
+        setPlayersSpectrums(spectrums);
     }, [otherPlayers, stage, score, socket]);
 
     const leaveGame = () => {

@@ -169,27 +169,32 @@ io.on("connection", (socket) => {
         }
         const roomObj = rooms.find((r) => r.name === room);
         if (roomObj) {
+            // Remove the player from the room
             roomObj.players = roomObj.players.filter((player) => player.socketId !== socketId);
             if (roomObj.players.length > 0) {
                 roomObj.players[0].owner = true;
                 io.to(roomObj.players[0].socketId).emit("you_are_owner", { owner: true });
             }
-
             if (roomObj.players.length === 0 && !roomObj.start) {
                 rooms = rooms.filter((r) => r.name !== room);
                 io.emit("rooms_list", rooms.filter((r) => !r.start).map((r) => r.name));
             } else if (roomObj.players.length === 0 && roomObj.start) {
+                // Do nothing
             } else {
                 io.emit("rooms_list", rooms.filter((r) => !r.start).map((r) => r.name));
             }
+            // Always emit the updated spectrums list
+            const otherPlayersData = roomObj.players.map(p => ({
+                name: p.name,
+                socketId: p.socketId,
+                score: p.score || 0,
+                stage: p.stage || []
+            }));
+            io.to(roomObj.name).emit("other_players_update", { players: otherPlayersData });
+            // Also update the players_list_in_room for lobby UI if needed
+            io.to(roomObj.name).emit("players_list_in_room", roomObj.players);
         }
-        const usersStillInRoom = usersInRoomBefore.filter(sid => sid !== socketId)
-        const usersInRoom = usersStillInRoom.map((socketId) => {
-            let user = users.find((u) => u.socketId === socketId);
-            return user
-        });
-        room.players = usersInRoom;
-        io.to(room).emit("players_list_in_room", usersInRoom);
+        // Remove the player from the socket room
         socket.leave(room);
     });
 
@@ -223,10 +228,8 @@ io.on("connection", (socket) => {
                     score: p.score || 0,
                     stage: p.stage || []
                 }));
-                room.players.forEach(p => {
-                    const playersForThisSocket = otherPlayersData.filter(op => op.socketId !== p.socketId);
-                    io.to(p.socketId).emit("other_players_update", { players: playersForThisSocket });
-                });
+                // Broadcast to all players in the room
+                io.to(room.name).emit("other_players_update", { players: otherPlayersData });
             }
         });
         rooms = rooms.filter((room) => room.players.length > 0);
@@ -283,11 +286,8 @@ io.on("connection", (socket) => {
                     score: p.score || 0,
                     stage: p.stage || []
                 }));
-                // Send to each remaining player their updated "other players" list
-                roomObj.players.forEach(p => {
-                    const playersForThisSocket = otherPlayersData.filter(op => op.socketId !== p.socketId);
-                    io.to(p.socketId).emit("other_players_update", { players: playersForThisSocket });
-                });
+                // Broadcast to all players in the room
+                io.to(roomObj.name).emit("other_players_update", { players: otherPlayersData });
             }
         }
     });
