@@ -61,36 +61,11 @@ export const useStage = (player, resetPlayer) => {
 
     const drawPlayerSpectrum = (player) => {
         const spectrumStage = createStage(STAGE_HEIGHT, STAGE_WIDTH);
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/wanis
         const playerSpectrum = drawPlayer(spectrumStage, player);
         return playerSpectrum;
     };
 
     const drawNextTetrominoShape = (nextRandomShape) => {
-<<<<<<< HEAD
-
-        const hasO = nextRandomShape.some(row => row.includes('O'));
-        const x = hasO ? 1 : 0;
-        
-        const shapeStage = createStage(4, 4);
-
-        const player = {
-            pos: { x: x, y: 1 },
-            tetromino: nextRandomShape,
-            collided: false,
-        }
-
-        const nextShapeStage = drawPlayer(shapeStage, player);
-
-        return nextShapeStage;
-    }
-
-    return [stage, setStage, rowsCleared, drawPlayerSpectrum, drawNextTetrominoShape];
-};  
-=======
         if (!nextRandomShape) return createStage(4, 4);
 
         const hasO = nextRandomShape.some(row => row.includes('O'));
@@ -116,4 +91,3 @@ export const useStage = (player, resetPlayer) => {
         addPenaltyRows
     ];
 };
->>>>>>> origin/wanis
