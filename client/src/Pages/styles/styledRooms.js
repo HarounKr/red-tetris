@@ -1,7 +1,14 @@
 import styled from "styled-components";
 
-export const StyledRoomsWrapper = styled.div`
+export const StyledMainLayout = styled.div`
+    display: flex;
     width: 100vw;
+    height: 100vh;
+    background-color: #000;
+`;
+
+export const StyledRoomsWrapper = styled.div`
+    flex: 1;
     height: 100vh;
     background-color: #000;
     background-size: cover;
@@ -261,5 +268,72 @@ export const StyledGravitySelector = styled.div`
     .label {
         color: #fff;
         font-size: 0.95rem;
+    }
+`;
+
+export const StyledAllScoreboards = styled.div`
+    width: 280px;
+    min-width: 280px;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+
+    h1 {
+        color: white;
+        font-size: 1.3rem;
+        margin-bottom: 20px;
+        text-align: center;
+        text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+        padding-bottom: 15px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .empty-message {
+        color: rgba(255, 255, 255, 0.5);
+        text-align: center;
+        font-size: 0.9rem;
+        margin-top: 20px;
+    }
+`;
+
+export const StyledScoreboardItem = styled.div`
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    transition: all 0.3s ease;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.15);
+    }
+
+    .room-name {
+        color: #ff4444;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .score-entry {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 4px 0;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.8rem;
+
+        .player-name {
+            color: white;
+        }
+
+        .score {
+            color: #00ff00;
+            font-weight: 600;
+        }
     }
 `;

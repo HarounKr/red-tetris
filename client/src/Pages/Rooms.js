@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 
 import {
+  StyledMainLayout,
   StyledRoomsWrapper,
   StyledRooms,
   StyledPlayerInfo,
@@ -14,7 +15,8 @@ import {
   StyledRoomItem,
   StyledPlayerItem,
   ReturnNav,
-  StyledGravitySelector
+  StyledGravitySelector,
+  StyledAllScoreboards
 } from "./styles/styledRooms";
 
 const Rooms = ({ socket, selectedGravity, setSelectedGravity }) => {
@@ -40,10 +42,21 @@ const Rooms = ({ socket, selectedGravity, setSelectedGravity }) => {
       });
     };
 
+    const applyStoredPlayerName = () => {
+      const storedName = sessionStorage.getItem('playerName');
+      if (storedName) {
+        socket.emit("set_player_name", { socketId: socket.id, name: storedName }, () => {
+          setPlayerName(storedName);
+        });
+      } else {
+        fetchPlayerName();
+      }
+    };
+
     const initializeRoom = () => {
         socket.emit("get_rooms");
         socket.emit("get_players");
-      fetchPlayerName();
+      applyStoredPlayerName();
     };
 
     if (socket && socket.connected) {
@@ -90,88 +103,96 @@ const Rooms = ({ socket, selectedGravity, setSelectedGravity }) => {
             sessionStorage.removeItem("wasOnRoomPage");
         };
   }, [socket, navigate]); 
-    
+
+  const isValidName = (value) => {
+    if (!value) return false;
+    return /^[a-zA-Z]+$/.test(value);
+  };
+
+  const handleNameChange = (e) => {
+    const value = e.target.value;
+    const filteredValue = value.replace(/[^a-zA-Z]/g, '');
+    setName(filteredValue);
+    if (error) setError(null);
+  };
+
     const handleNameSubmit = () => {
         if (!name) {
             setError("Room name is required");
             return;
         }
+      if (!isValidName(name)) {
+        setError("Room name must contain only letters (no numbers or spaces)");
+        return;
+      }
       setError(null);
         navigate(`/${name}`);
     };
 
   return (
-    <StyledRoomsWrapper>
-      <StyledPlayerInfo isConnected={socket?.connected}>
-        <div className="status-dot"></div>
-        <span>{playerName}</span>
-      </StyledPlayerInfo>
+    <StyledMainLayout>
+      <StyledRoomsWrapper>
+        <StyledPlayerInfo isConnected={socket?.connected}>
+          <div className="status-dot"></div>
+          <span>{playerName}</span>
+        </StyledPlayerInfo>
 
-      <StyledRooms>
-        <h1>Red Tetris</h1>
+        <StyledRooms>
+          <h1>Red Tetris</h1>
 
-        <StyledCreateRoomSection>
-          <div className="room-row">
-            <input
-              type="text"
-              id="name"
-              placeholder="Enter room name..."
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-            <button onClick={handleNameSubmit}>Create Room</button>
-          </div>
-
-          <StyledGravitySelector>
-            <div className="options">
-              {gravityOptions.map((option) => (
-                <label key={option.value} className="option">
-                  <input
-                    type="checkbox"
-                    checked={selectedGravity === option.value}
-                    onChange={() => setSelectedGravity && setSelectedGravity(option.value)}
-                  />
-                  <span className="label">{option.label}</span>
-                </label>
-              ))}
+          <StyledCreateRoomSection>
+            <div className="room-row">
+              <input
+                type="text"
+                id="name"
+                placeholder="Enter room name (letters only)..."
+                value={name}
+                onChange={handleNameChange}
+              />
+              <button onClick={handleNameSubmit}>Create Room</button>
             </div>
-          </StyledGravitySelector>
-        </StyledCreateRoomSection>
+          </StyledCreateRoomSection>
 
-        {error && <StyledErrorMessage>{error}</StyledErrorMessage>}
+          {error && <StyledErrorMessage>{error}</StyledErrorMessage>}
 
-        <StyledGridContainer>
-          <StyledSection>
-            <h2>Available Rooms</h2>
-            <StyledList>
-              {rooms.length === 0 ? (
-                <p className="empty-message">No rooms available. Create one!</p>
-              ) : (
-                rooms.map((room, index) => (
-                  <StyledRoomItem key={index}>
-                    <span className="room-name">{room}</span>
-                    <button onClick={() => navigate(`/${room}`)}>Join</button>
-                  </StyledRoomItem>
-                ))
-              )}
-            </StyledList>
-          </StyledSection>
+          <StyledGridContainer>
+            <StyledSection>
+              <h2>Available Rooms</h2>
+              <StyledList>
+                {rooms.length === 0 ? (
+                  <p className="empty-message">No rooms available. Create one!</p>
+                ) : (
+                  rooms.map((room, index) => (
+                    <StyledRoomItem key={index}>
+                      <span className="room-name">{room}</span>
+                      <button onClick={() => navigate(`/${room}`)}>Join</button>
+                    </StyledRoomItem>
+                  ))
+                )}
+              </StyledList>
+            </StyledSection>
 
-          <StyledSection>
-            <h2>Players Online ({players.length})</h2>
-            <StyledList>
-              {players.length === 0 ? (
-                <p className="empty-message">No players connected.</p>
-              ) : (
-                players.map((player, index) => (
-                  <StyledPlayerItem key={index}>{player}</StyledPlayerItem>
-                ))
-              )}
-            </StyledList>
-          </StyledSection>
-        </StyledGridContainer>
-      </StyledRooms>
-    </StyledRoomsWrapper>
+            <StyledSection>
+              <h2>Players Online ({players.length})</h2>
+              <StyledList>
+                {players.length === 0 ? (
+                  <p className="empty-message">No players connected.</p>
+                ) : (
+                  players.map((player, index) => (
+                    <StyledPlayerItem key={index}>{player}</StyledPlayerItem>
+                  ))
+                )}
+              </StyledList>
+            </StyledSection>
+          </StyledGridContainer>
+        </StyledRooms>
+      </StyledRoomsWrapper>
+
+      <StyledAllScoreboards>
+        <h1>Scoreboards</h1>
+        <p className="empty-message">No games played yet</p>
+      </StyledAllScoreboards>
+    </StyledMainLayout>
   );
 };
 
