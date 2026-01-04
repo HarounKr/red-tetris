@@ -31,7 +31,7 @@ const Tetris = ({ socket, selectedGravity }) => {
     const [gameOver, setGameOver] = useState(false);
     const [dropTime, setDropTime] = useState(null);
     const [player, updatePlayerPos, resetPlayer, nextRandomShape, playerRotate, resetSequenceIndex] = usePlayer(tetrominoSequence);
-    const [stage, setStage, rowsCleared, drawPlayersSpectrums, drawNextTetrominoShape] = useStage(player, resetPlayer, gameOver);
+    const [stage, setStage, rowsCleared, drawPlayersSpectrums, drawNextTetrominoShape, addPenaltyRows] = useStage(player, resetPlayer, gameOver);
     const [level, setLevel, rows, setRows, score, setScore] = useGameStatus(rowsCleared, socket, room);
     const [showScoreboard, setShowScoreboard] = useState(false);
     const [finalScores, setFinalScores] = useState([]);
@@ -314,65 +314,65 @@ const Tetris = ({ socket, selectedGravity }) => {
     useEffect(() => {
         if (!socket) return;
 
-        const handlePenaltyRows = ({ penaltyRows, fromPlayer }) => {
-            if (fromPlayer === socket.id) {
-                return;
+    const handlePenaltyRows = ({ penaltyRows, fromPlayer }) => {
+        // 1. Ignorer si c'est nous qui avons envoyé la ligne
+        if (fromPlayer === socket.id) return;
+
+        // 2. Appliquer la pénalité de manière persistante
+        // On appelle la fonction du hook qui va modifier l'état interne du stage
+        addPenaltyRows(penaltyRows);
+
+        // 3. Vérification du Game Over
+        if (player && player.tetromino) {
+            let hasCollision = false;
+
+            // On vérifie la collision sur le "nouveau" plateau (virtuellement décalé)
+            // car les lignes montent de 'penaltyRows' cases.
+            for (let y = 0; y < player.tetromino.length; y++) {
+                for (let x = 0; x < player.tetromino[y].length; x++) {
+                    if (player.tetromino[y][x] !== 0) {
+                        const newY = player.pos.y + y - penaltyRows;
+                        const newX = player.pos.x + x;
+
+                        // Si après décalage la pièce tape le haut ou une cellule occupée
+                        if (
+                            newY < 0 ||
+                            (stage[newY + penaltyRows] &&
+                                stage[newY + penaltyRows][newX] &&
+                                stage[newY + penaltyRows][newX][1] === 'merged')
+                        ) {
+                            hasCollision = true;
+                            break;
+                        }
+                    }
+                }
+                if (hasCollision) break;
             }
 
-            setStage(prevStage => {
-                const newPenaltyRows = [];
-                for (let i = 0; i < penaltyRows; i++) {
-                    const penaltyRow = prevStage[0].map(() => ['P', 'merged']);
-                    newPenaltyRows.push(penaltyRow);
+            if (hasCollision) {
+                setGameOver(true);
+                setDropTime(null);
+
+                if (!hasSubmittedScore.current) {
+                    hasSubmittedScore.current = true;
+                    socket.emit("game_over", {
+                        socketId: socket.id,
+                        room,
+                        score: currentScoreRef.current,
+                        rows: currentRowsRef.current,
+                        level: currentLevelRef.current
+                    });
                 }
+            }
+        }
+    };
 
-                const newStage = [...prevStage.slice(penaltyRows), ...newPenaltyRows];
+    socket.on("add_penalty_rows", handlePenaltyRows);
 
-                if (player && player.tetromino) {
-                    let hasCollision = false;
-                    for (let y = 0; y < player.tetromino.length; y++) {
-                        for (let x = 0; x < player.tetromino[y].length; x++) {
-                            if (player.tetromino[y][x] !== 0) {
-                                const newY = player.pos.y + y;
-                                const newX = player.pos.x + x;
-                                if (newY < 0 || newY >= newStage.length ||
-                                    newX < 0 || newX >= newStage[0].length ||
-                                    (newStage[newY] && newStage[newY][newX] && newStage[newY][newX][1] === 'merged')) {
-                                    hasCollision = true;
-                                    break;
-                                }
-                            }
-                        }
-                        if (hasCollision) break;
-                    }
-
-                    if (hasCollision) {
-                        setGameOver(true);
-                        setDropTime(null);
-
-                        if (!hasSubmittedScore.current) {
-                            hasSubmittedScore.current = true;
-                            socket.emit("game_over", {
-                                socketId: socket.id,
-                                room,
-                                score: currentScoreRef.current,
-                                rows: currentRowsRef.current,
-                                level: currentLevelRef.current
-                            });
-                        }
-                    }
-                }
-
-                return newStage;
-            });
-        };
-
-        socket.on("add_penalty_rows", handlePenaltyRows);
-
-        return () => {
-            socket.off("add_penalty_rows", handlePenaltyRows);
-        };
-    }, [socket, setStage, room, player]);
+    return () => {
+        socket.off("add_penalty_rows", handlePenaltyRows);
+    };
+}, [socket, addPenaltyRows, player, room, stage]);
 
     const dropPlayer = () => {
         drop();
