@@ -132,7 +132,7 @@ const Rooms = ({ socket, selectedGravity, setSelectedGravity }) => {
   return (
     <StyledMainLayout>
       <StyledRoomsWrapper>
-        <StyledPlayerInfo isConnected={socket?.connected}>
+        <StyledPlayerInfo $isConnected={socket?.connected}>
           <div className="status-dot"></div>
           <span>{playerName}</span>
         </StyledPlayerInfo>
