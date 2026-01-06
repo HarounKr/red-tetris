@@ -163,6 +163,7 @@ export const StyledList = styled.ul`
     margin: 0;
     overflow-y: auto;
     flex: 1;
+
 `;
 
 export const StyledRoomItem = styled.li`
@@ -299,6 +300,37 @@ export const StyledAllScoreboards = styled.div`
         font-size: 0.9rem;
         margin-top: 20px;
     }
+
+    .scoreboards-container {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin-top: 15px;
+        width: 100%;
+    }
+
+
+`;
+
+export const StyledScoreboard = styled.div`
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    width: 100%;
+
+    span.scoreboard-name {
+        color: white;
+        font-size: 1.2rem;
+        text-align: center;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    }
+    span.scoreboard-score {
+        color: #00ff00;
+        font-size: 1.2rem;
+        font-weight: 600;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    }
 `;
 
 export const StyledScoreboardItem = styled.div`
@@ -337,3 +369,5 @@ export const StyledScoreboardItem = styled.div`
         }
     }
 `;
+
+

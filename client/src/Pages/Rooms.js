@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
-
+import axios from "axios";
 import {
   StyledMainLayout,
   StyledRoomsWrapper,
@@ -16,7 +16,8 @@ import {
   StyledPlayerItem,
   ReturnNav,
   StyledGravitySelector,
-  StyledAllScoreboards
+  StyledAllScoreboards,
+  StyledScoreboard,
 } from "./styles/styledRooms";
 
 const Rooms = ({ socket, selectedGravity, setSelectedGravity }) => {
@@ -26,6 +27,7 @@ const Rooms = ({ socket, selectedGravity, setSelectedGravity }) => {
     const [error, setError] = useState(null);
     const [rooms, setRooms] = useState([]);
     const [players, setPlayers] = useState([]);
+  const [scoreboards, setScoreboards] = useState([]);
 
     const gravityOptions = [
       { value: "Turtle", label: "Turtle" },
@@ -42,6 +44,8 @@ const Rooms = ({ socket, selectedGravity, setSelectedGravity }) => {
       });
     };
 
+
+
     const applyStoredPlayerName = () => {
       const storedName = sessionStorage.getItem('playerName');
       if (storedName) {
@@ -53,10 +57,20 @@ const Rooms = ({ socket, selectedGravity, setSelectedGravity }) => {
       }
     };
 
+    const applyStoredScoreAndPlayerName = async () => {
+      console.log('Fetching scoreboard data from server...');
+      await axios.get('http://localhost:8000/scoreboard').then((response) => {
+        if (response.data) {
+          setScoreboards(response.data);
+        }
+      });
+    };
+
     const initializeRoom = () => {
         socket.emit("get_rooms");
         socket.emit("get_players");
       applyStoredPlayerName();
+      applyStoredScoreAndPlayerName();
     };
 
     if (socket && socket.connected) {
@@ -190,7 +204,22 @@ const Rooms = ({ socket, selectedGravity, setSelectedGravity }) => {
 
       <StyledAllScoreboards>
         <h1>Scoreboards</h1>
-        <p className="empty-message">No games played yet</p>
+        {scoreboards.length === 0 ? (
+          <p className="empty-message">No games played yet</p>
+        ) : (
+          <div className="scoreboards-container">
+            {scoreboards.length === 0 ? (
+              <p className="empty-message">No games played yet</p>
+            ) : (
+              scoreboards.map((entry, index) => (
+                <StyledScoreboard key={index} className="scoreboard">
+                  <span className="scoreboard-name">{entry.name}</span>
+                  <span className="scoreboard-score">{entry.score}</span>
+                </StyledScoreboard>
+              ))
+            )}
+          </div>
+        )}
       </StyledAllScoreboards>
     </StyledMainLayout>
   );

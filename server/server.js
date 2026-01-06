@@ -1,11 +1,21 @@
+require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
 const app = express();
+app.use(cors(
+    {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+));
 const { createServer } = require("http");
 const path = require('path')
 const port = process.env.PORT || 8000;
 const env = process.env.NODE_ENV;
 const { Server } = require("socket.io");
+const { createClient } = require('@supabase/supabase-js');
 
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY)
 
 if (env === 'production') {
     app.use(express.static(path.join(__dirname, '../client/build')));
@@ -15,6 +25,23 @@ if (env === 'production') {
     });
 }
 
+app.get("/scoreboard", async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('scores')
+            .select('*')
+            .order('score', { ascending: false })
+            .limit(10);
+
+        if (error) {
+            res.status(500).json({ error: 'Error fetching scores' });
+        } else {
+            res.json(data);
+        }
+    } catch (err) {
+        res.status(500).json({ error: 'Unexpected error' });
+    }
+});
 app.get('/api/health', (req, res) => {
     res.send('OK');
 });
@@ -23,14 +50,16 @@ app.get("/*splat", (req, res) => {
     res.sendFile(path.join(__dirname, '../client/build/index.html'));
 });
 
-const PORT = 8000;
+
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
     cors: {
-        origin: "*", // Autorise tout pendant les tests
+        origin: "*",
         methods: ["GET", "POST"]
     }
 });
+
+
 
 function generaterandomNamewithonlyletters() {
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
@@ -321,6 +350,9 @@ io.on("connection", (socket) => {
                     rows: p.finalRows || 0,
                     level: p.finalLevel || 0
                 }));
+                for (const p of roomObj.players) {
+                    insertScore(p.name, p.finalScore || 0);
+                }
                 const owner = roomObj.players.find(p => p.owner === true);
                 const ownerSocketId = owner ? owner.socketId : (roomObj.players[0] ? roomObj.players[0].socketId : null);
                 io.to(room).emit("final_scores", { scores, ownerSocketId });
@@ -350,6 +382,10 @@ io.on("connection", (socket) => {
             }));
             const owner = roomObj.players.find(p => p.owner);
             const ownerSocketId = owner ? owner.socketId : null;
+            for (const p of roomObj.players) {
+                insertScore(p.name, p.finalScore || 0);
+            }
+
             io.to(room).emit("final_scores", { scores, ownerSocketId });
         }
     });
@@ -398,4 +434,13 @@ if (process.env.NODE_ENV !== 'test') {
         console.log('Server app listening on port ' + port);
     });
 }
-module.exports = { app, httpServer, rooms, users };
+
+async function insertScore(name, score) {
+    await supabase
+        .from('scores')
+        .insert([
+            { name, score }
+        ]);
+}
+
+module.exports = { app, httpServer, rooms, users, insertScore };
