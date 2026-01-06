@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { TETROMINOS } from '../../tetrominos';
-import { checkCollision, STAGE_WIDTH } from '../../gameHelpers';
+import { checkCollision, STAGE_WIDTH } from '../../game/gameHelpers';
 import rotateBlock from '../../assets/rotate-sound.wav'
 
 
@@ -59,21 +59,35 @@ export const usePlayer = (sharedSequence = null, sound) => {
     };
 
     const playerRotate = (stage, dir) => {
+        // Vérifie si la pièce est un bloc O (qui ne tourne pas).
         const hasO = player.tetromino.some(row => row.includes('O'));
+        // Ne tente la rotation que si ce n’est pas un bloc O.
         if (!hasO) {
+            // Copie profonde du joueur pour ne pas muter l’état.
             const clonedPlayer = JSON.parse(JSON.stringify(player));    
+            // Applique la rotation demandée sur le tétrimino copié.
             clonedPlayer.tetromino = rotate(clonedPlayer.tetromino, dir);
+            // Mémorise la position x d’origine pour un éventuel rollback.
             const pos = clonedPlayer.pos.x;
+            // Offset initial d’une colonne pour gérer les wall kicks.
             let offset = 1;
+            // Décale gauche/droite tant qu’il y a collision après rotation.
             while (checkCollision(clonedPlayer, stage, { x: 0, y: 0 })) {
+                // Déplace horizontalement selon l’offset courant.
                 clonedPlayer.pos.x += offset;
+                // Inverse le sens et augmente progressivement l’offset.
                 offset = -(offset + (offset > 0 ? 1 : -1));
+                // Si tous les offsets échouent, on annule la rotation.
                 if (offset > clonedPlayer.tetromino[0].length) {
-                    rotate(clonedPlayer.tetromino, -dir, sound);
+                    // Rétablit l’orientation initiale.
+                    rotate(clonedPlayer.tetromino, -dir);
+                    // Restaure la position x d’origine.
                     clonedPlayer.pos.x = pos;
+                    // Sort sans appliquer la rotation.
                     return;                                    
                 }
             }    
+            // Sauvegarde en état la rotation validée.
             setPlayer(clonedPlayer);
         }
     };
@@ -96,9 +110,7 @@ export const usePlayer = (sharedSequence = null, sound) => {
         setNextRandomShape(getNextTetromino());
     }, [nextRandomShape, sharedSequence]);
 
-    const resetSequenceIndex = useCallback(() => {
-        sequenceIndexRef.current = 0;
-    }, []);
+    
 
-    return [player, updatePlayerPos, resetPlayer, nextRandomShape, playerRotate, resetSequenceIndex];
+    return [player, updatePlayerPos, resetPlayer, nextRandomShape, playerRotate];
 };

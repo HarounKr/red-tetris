@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { createStage, drawPlayer, STAGE_HEIGHT, STAGE_WIDTH } from '../../gameHelpers';
+import { createStage, drawPlayer, STAGE_HEIGHT, STAGE_WIDTH } from '../../game/gameHelpers';
 
 export const useStage = (player, resetPlayer) => {
     const [stage, setStage] = useState(createStage(STAGE_HEIGHT, STAGE_WIDTH));
@@ -17,14 +17,13 @@ export const useStage = (player, resetPlayer) => {
             return newStage;
         });
     }, []);
-    
+
     useEffect(() => {
         setRowsCleared(0);
 
         const sweepRows = (newStage) => {
             return newStage.reduce((ack, row) => {
                 // On ne supprime une ligne que si elle est pleine ET que ce n'est pas une ligne de pénalité
-                // (Optionnel : retirez "&& row[0][0] !== 'P'" si vous voulez que les pénalités soient destructibles)
                 if (row.findIndex(cell => cell[0] === 0) === -1 && row[0][0] !== 'P') {
                     setRowsCleared(prev => prev + 1);
                     // On rajoute une ligne vide en haut pour compenser

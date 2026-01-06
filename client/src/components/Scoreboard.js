@@ -101,7 +101,8 @@ const StyledButton = styled.button`
     color: #fff;
     border: none;
     border-radius: 10px;
-    font-size: 1.1rem;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 1rem;
     font-weight: bold;
     cursor: pointer;
     transition: all 0.3s ease;
