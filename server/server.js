@@ -6,6 +6,7 @@ const port = process.env.PORT || 8000;
 const env = process.env.NODE_ENV;
 const { Server } = require("socket.io");
 
+
 if (env === 'production') {
     app.use(express.static(path.join(__dirname, '../client/build')));
 } else {
@@ -26,15 +27,10 @@ const PORT = 8000;
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
     cors: {
-        origin: "http://localhost:8001",
+        origin: "*", // Autorise tout pendant les tests
         methods: ["GET", "POST"]
     }
 });
-
-room = {
-    name: null,
-    players: []
-};
 
 function generaterandomNamewithonlyletters() {
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
@@ -44,9 +40,9 @@ function generaterandomNamewithonlyletters() {
     }
     return name;
 }
-users = [];
+let users = [];
 
-rooms = [];
+let rooms = [];
 io.on("connection", (socket) => {
     let user = {
         name: generaterandomNamewithonlyletters(),
@@ -56,7 +52,6 @@ io.on("connection", (socket) => {
         score: 0
     };
     users.push(user);
-
     socket.on("start_game", ({ gameRoom }) => {
         let roomObj = rooms.find((r) => r.name === gameRoom);
         if (roomObj) {
@@ -73,56 +68,49 @@ io.on("connection", (socket) => {
         io.to(gameRoom).emit("game_started", { tetrominoSequence: roomObj?.tetrominoSequence || [] });
     });
 
-
     socket.on("get_player_name", ({ socketId }, callback) => {
-        let user = users.find((user) => user.socketId === socketId);
-        if (user) {
-            callback(user);
-        } else {
-            callback(null);
-        }
-    });
+        callback(users.find((u) => u.socketId === socketId) ?? null);
+    }); 
 
     socket.on("set_player_name", ({ socketId, name }, callback) => {
-        let user = users.find((user) => user.socketId === socketId);
+        let user = users.find((u) => u.socketId === socketId);
+
         if (user) {
             user.name = name;
-            if (callback) callback({ success: true });
         } else {
-            const newUser = {
-                socketId: socketId,
-                name: name,
+            users.push({
+                socketId,
+                name,
                 owner: false,
                 score: 0
-            };
-            users.push(newUser);
-            if (callback) callback({ success: true });
+            });
         }
-    });
+
+        if (callback) callback({ success: true });
+    }); 
 
     socket.on("player_disconnect", ({ socketId }) => {
         users = users.filter((user) => user.socketId !== socketId);
         io.emit("players_list", users.map((user) => user.name).filter((name) => name !== null));
 
-    });
+    }); 
+
     socket.on("get_rooms", () => {
         const roomsList = rooms.filter((room) => !room.start).map((room) => room.name);
         io.emit("rooms_list", roomsList);
-    });
+    }); 
 
     socket.on("check_room_status", ({ room }, callback) => {
         const roomObj = rooms.find((r) => r.name === room);
-        if (!roomObj) {
-            callback({ exists: false, inGame: false });
-        } else {
-            callback({ exists: true, inGame: roomObj.start });
-        }
+        callback({
+            exists: !!roomObj,
+            inGame: roomObj ? roomObj.start : false
+        });
     });
 
     socket.on("get_players", () => {
-        const playersList = users.map((user) => user.name).filter((name) => name !== null);
-        io.emit("players_list", playersList);
-    });
+        io.emit("players_list", users.map((user) => user.name).filter((name) => name !== null));
+    }); 
 
     socket.on("join_room", ({ room, socketId }) => {
         socket.join(room);
@@ -155,48 +143,40 @@ io.on("connection", (socket) => {
                 io.to(room).emit("players_list_in_room", roomObj.players);
         }
 
-    });
+    }); 
 
     socket.on("change_game_mode", ({ room, gameMode }) => {
         io.to(room).emit("game_mode_update", { gameMode });
-    });
+    }); 
 
     socket.on("leave_room", ({ room, socketId }) => {
-        const usersInRoomBefore = Array.from(io.sockets.adapter.rooms.get(room) || []);
-        const userLeaving = users.find(u => u.socketId === socketId);
-        if (userLeaving) {
-            userLeaving.owner = false;
-        }
-        const roomObj = rooms.find((r) => r.name === room);
-        if (roomObj) {
-            // Remove the player from the room
-            roomObj.players = roomObj.players.filter((player) => player.socketId !== socketId);
-            if (roomObj.players.length > 0) {
-                roomObj.players[0].owner = true;
-                io.to(roomObj.players[0].socketId).emit("you_are_owner", { owner: true });
-            }
-            if (roomObj.players.length === 0 && !roomObj.start) {
-                rooms = rooms.filter((r) => r.name !== room);
-                io.emit("rooms_list", rooms.filter((r) => !r.start).map((r) => r.name));
-            } else if (roomObj.players.length === 0 && roomObj.start) {
-                // Do nothing
-            } else {
-                io.emit("rooms_list", rooms.filter((r) => !r.start).map((r) => r.name));
-            }
-            // Always emit the updated spectrums list
-            const otherPlayersData = roomObj.players.map(p => ({
-                name: p.name,
-                socketId: p.socketId,
-                score: p.score || 0,
-                stage: p.stage || []
-            }));
-            io.to(roomObj.name).emit("other_players_update", { players: otherPlayersData });
-            // Also update the players_list_in_room for lobby UI if needed
-            io.to(roomObj.name).emit("players_list_in_room", roomObj.players);
-        }
-        // Remove the player from the socket room
+        const roomObj = rooms.find(r => r.name === room);
+        if (!roomObj) return;
+
+        roomObj.players = roomObj.players.filter(
+            p => p.socketId !== socketId
+        );
+
         socket.leave(room);
-    });
+
+        roomObj.players.forEach(p => p.owner = false);
+        if (roomObj.players.length > 0) {
+            roomObj.players[0].owner = true;
+            io.to(roomObj.players[0].socketId)
+                .emit("you_are_owner", { owner: true });
+        }
+
+        if (roomObj.players.length === 0 && !roomObj.start) {
+            rooms = rooms.filter(r => r.name !== room);
+        }
+
+        io.to(room).emit("players_list_in_room", roomObj.players);
+
+        io.emit(
+            "rooms_list",
+            rooms.filter(r => !r.start).map(r => r.name)
+        );
+    }); 
 
     socket.on("player_return_home", ({ socketId }) => {
         let user = users.find((user) => user.socketId === socketId);
@@ -209,7 +189,7 @@ io.on("connection", (socket) => {
         });
         rooms = rooms.filter((room) => room.players.length > 0);
         io.emit("rooms_list", rooms.filter((r) => !r.start).map((r) => r.name));
-    });
+    }); 
 
     socket.on("disconnect", () => {
         const disconnectedSocketId = socket.id;
@@ -228,7 +208,6 @@ io.on("connection", (socket) => {
                     score: p.score || 0,
                     stage: p.stage || []
                 }));
-                // Broadcast to all players in the room
                 io.to(room.name).emit("other_players_update", { players: otherPlayersData });
             }
         });
@@ -236,7 +215,6 @@ io.on("connection", (socket) => {
         io.emit("players_list", users.map((user) => user.name).filter((name) => name !== null));
         io.emit("rooms_list", rooms.filter((r) => !r.start).map((r) => r.name));
     });
-
 
     socket.on("join_game_room", ({ room, socketId }) => {
         socket.join(room);
@@ -266,8 +244,6 @@ io.on("connection", (socket) => {
         if (roomObj.tetrominoSequence) {
             io.to(socketId).emit("tetromino_sequence", { sequence: roomObj.tetrominoSequence });
         }
-
-        const socketsInRoom = io.sockets.adapter.rooms.get(room);
     });
 
     socket.on("leave_game_room", ({ room, socketId }) => {
@@ -279,18 +255,16 @@ io.on("connection", (socket) => {
                 rooms = rooms.filter((r) => r.name !== room);
                 io.emit("rooms_list", rooms.filter((r) => !r.start).map((r) => r.name));
             } else if (roomObj.players.length > 0) {
-                // Notify remaining players about the updated player list (for spectrums)
                 const otherPlayersData = roomObj.players.map(p => ({
                     name: p.name,
                     socketId: p.socketId,
                     score: p.score || 0,
                     stage: p.stage || []
                 }));
-                // Broadcast to all players in the room
                 io.to(roomObj.name).emit("other_players_update", { players: otherPlayersData });
             }
         }
-    });
+    }); 
 
     socket.on("get_other_players", ({ room, socketId }) => {
         const roomObj = rooms.find((r) => r.name === room);
@@ -325,9 +299,6 @@ io.on("connection", (socket) => {
     });
 
     socket.on("game_over", ({ socketId, room, score, rows, level }) => {
-
-        const socketsInRoom = io.sockets.adapter.rooms.get(room);
-
         const roomObj = rooms.find((r) => r.name === room);
         if (roomObj) {
             const player = roomObj.players.find(p => p.socketId === socketId);
@@ -409,21 +380,22 @@ io.on("connection", (socket) => {
     });
 
     socket.on("rows_cleared", ({ room, socketId, rows }) => {
-        const socketsInRoom = io.sockets.adapter.rooms.get(room);
-
         let penaltyRows = 0;
-        if (rows >= 2) penaltyRows = rows - 1;
-
-
-        if (penaltyRows > 0) {
+        if (rows >= 2) {
+            penaltyRows = rows - 1;
             socket.to(room).emit("add_penalty_rows", {
                 penaltyRows,
                 fromPlayer: socketId
             });
+
         }
+
     });
 });
 
-httpServer.listen(PORT, () => {
-    console.log('Server app listening on port ' + PORT);
-});
+if (process.env.NODE_ENV !== 'test') {
+    httpServer.listen(port, () => {
+        console.log('Server app listening on port ' + port);
+    });
+}
+module.exports = { app, httpServer, rooms, users };
