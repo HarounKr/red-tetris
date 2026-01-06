@@ -6,7 +6,6 @@ import Stage from './Stage';
 import Display from './Display';
 import LeaveButtons from './LeaveButtons';
 import Scoreboard from './Scoreboard';
-import NextPiece from './NextPiece';
 import { createStage, checkCollision, STAGE_HEIGHT, STAGE_WIDTH } from '../gameHelpers';
 import { useStage } from './hooks/useStage';
 import { usePlayer } from './hooks/usePlayer';
@@ -14,7 +13,13 @@ import { useInterval } from './hooks/useInterval';
 import { StyledTetrisWrapper, StyledTetris } from './styles/StyledTetris';
 import { useGameStatus } from './hooks/useGameStatus';
 import { useParams, useNavigate, useLocation } from "react-router";
+import dropBlock from '../assets/drop-block.wav';
+import blockHit from '../assets/game-block-hit.wav';
+import childGameOver from '../assets/child-game-over.wav'
+import rowClear from '../assets/row-cleared.wav'
 import Spectrums from './Spectrums';
+import { ReactComponent as SoundOn } from '../assets/icons/volume-on.svg'
+import { ReactComponent as SoundOff } from '../assets/icons/volume-off.svg'
 
 const Tetris = ({ socket, selectedGravity }) => {
     const { room, player: playerNameFromUrl } = useParams();
@@ -28,9 +33,10 @@ const Tetris = ({ socket, selectedGravity }) => {
     const gameModeFromState = location.state?.gameMode || selectedGravity || 'Standard';
     const [nextTetrominoShape, setNextTetrominoShape] = useState();
 
+    const [sound, setSound] = useState(false);
     const [gameOver, setGameOver] = useState(false);
     const [dropTime, setDropTime] = useState(null);
-    const [player, updatePlayerPos, resetPlayer, nextRandomShape, playerRotate, resetSequenceIndex] = usePlayer(tetrominoSequence);
+    const [player, updatePlayerPos, resetPlayer, nextRandomShape, playerRotate, resetSequenceIndex] = usePlayer(tetrominoSequence, sound);
     const [stage, setStage, rowsCleared, drawPlayersSpectrums, drawNextTetrominoShape, addPenaltyRows] = useStage(player, resetPlayer, gameOver);
     const [level, setLevel, rows, setRows, score, setScore] = useGameStatus(rowsCleared, socket, room);
     const [showScoreboard, setShowScoreboard] = useState(false);
@@ -42,9 +48,65 @@ const Tetris = ({ socket, selectedGravity }) => {
     const currentScoreRef = useRef(0);
     const currentRowsRef = useRef(0);
     const currentLevelRef = useRef(0);
+    const dropSoundRef = useRef();
+    const blockHitSoundRef = useRef();
+    const gameOverSoundRef = useRef();
 
     const [playersSpectrums, setPlayersSpectrums] = useState();
     const [otherPlayers, setOtherPlayers] = useState([]);
+    const gravity = {
+        Turtle: 2000,
+        Standard: 1000,
+        Rabbit: 100,
+    }
+
+    useEffect(( ) => {
+        dropSoundRef.current = new Audio(dropBlock);
+        blockHitSoundRef.current = new Audio(blockHit);
+        gameOverSoundRef.current = new Audio(childGameOver);
+
+        [dropSoundRef, blockHitSoundRef, gameOverSoundRef].forEach((ref) => {
+            if (ref.current)
+                ref.current.preload = 'auto';
+        })
+
+    }, [])
+
+    const playSound = (audioRef) => {
+        if (sound && audioRef) {
+            audioRef.current.currentTime = 0;
+            audioRef.current.play();
+        }
+    }
+
+    useEffect(() => {
+       console.log(dropTime);
+       if (!dropTime) return;
+
+       const handleBeforeUnload = () => {
+        leaveGame();
+       }
+
+       window.addEventListener('beforeunload', handleBeforeUnload);
+
+       return (() => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+       })
+
+    }, [dropTime]);
+
+    useEffect(() => {
+        if (!accessAllowed) return;
+
+        setStage(createStage(STAGE_HEIGHT, STAGE_WIDTH));
+        const initialDrop = gravity[gameModeFromState] || gravity.Standard;
+        setDropTime(initialDrop);
+        resetPlayer();
+        setScore(0);
+        setRows(0);
+        setLevel(0);
+    }, [accessAllowed, gameModeFromState]);
+
 
     const isValidName = (name) => {
         if (!name) return false;
@@ -131,11 +193,6 @@ const Tetris = ({ socket, selectedGravity }) => {
         }
     }, [player, score, stage, socket, room, gameOver]);
 
-    const gravity = useMemo(() => ({
-        Turtle: 2000,
-        Standard: 1000,
-        Rabbit: 100,
-    }), []);
 
     useEffect(() => {
         currentScoreRef.current = score;
@@ -145,31 +202,15 @@ const Tetris = ({ socket, selectedGravity }) => {
 
     const movePlayer = dir => {
         if (!checkCollision(player, stage, { x: dir, y: 0 })) {
+            playSound(dropSoundRef);
             updatePlayerPos({ x: dir, y: 0 });
         }
     };
+
     useEffect(() => {
         setNextTetrominoShape(drawNextTetrominoShape(nextRandomShape));
-
-        console.log()
-
     }, [nextRandomShape])
 
-    useEffect(() => {
-        console.log("nextTetrominoShape : ", nextTetrominoShape);
-    }, [nextTetrominoShape]);
-
-    useEffect(() => {
-        if (!accessAllowed) return;
-
-        setStage(createStage(STAGE_HEIGHT, STAGE_WIDTH));
-        const initialDrop = gravity[gameModeFromState] || gravity.Standard;
-        setDropTime(initialDrop);
-        resetPlayer();
-        setScore(0);
-        setRows(0);
-        setLevel(0);
-    }, [accessAllowed, gameModeFromState, gravity]);
 
 
     useEffect(() => {
@@ -202,6 +243,7 @@ const Tetris = ({ socket, selectedGravity }) => {
         setPlayersSpectrums(spectrums);
     }, [otherPlayers, stage, score, socket]);
 
+
     const leaveGame = () => {
         if (room && socket && socket.connected) {
             socket.emit("leave_room", { room, socketId: socket.id });
@@ -225,6 +267,7 @@ const Tetris = ({ socket, selectedGravity }) => {
             if (player.pos.y <= 1) {
                 setGameOver(true);
                 setDropTime(null);
+                
 
                 if (!hasSubmittedScore.current) {
                     hasSubmittedScore.current = true;
@@ -239,6 +282,7 @@ const Tetris = ({ socket, selectedGravity }) => {
                 }
                 return;
             }
+            playSound(blockHitSoundRef);
             updatePlayerPos({ x: 0, y: 0, collided: true });
         }
     };
@@ -375,6 +419,7 @@ const Tetris = ({ socket, selectedGravity }) => {
 }, [socket, addPenaltyRows, player, room, stage]);
 
     const dropPlayer = () => {
+        playSound(dropSoundRef)
         drop();
     };
 
@@ -383,8 +428,16 @@ const Tetris = ({ socket, selectedGravity }) => {
         while (!checkCollision(player, stage, { x: 0, y: newY - player.pos.y + 1 })) {
             newY++;
         }
+        playSound(blockHitSoundRef);
         updatePlayerPos({ x: 0, y: newY - player.pos.y, collided: true });
     };
+
+    useEffect(() => {
+        if (gameOver && sound) {
+            playSound(gameOverSoundRef);
+        }
+
+    }, [gameOver, rowsCleared]);
 
     const moove = ({ keyCode }) => {
         if (!gameOver) {
@@ -395,7 +448,7 @@ const Tetris = ({ socket, selectedGravity }) => {
             } else if (keyCode === 40) {
                 dropPlayer();
             } else if (keyCode === 38) {
-                playerRotate(stage, 1); 
+                playerRotate(stage, 1, sound); 
             } else if (keyCode === 32) {
                 hardDrop();
             }
@@ -442,6 +495,10 @@ const Tetris = ({ socket, selectedGravity }) => {
         );
     }
 
+    const handleSound = () => {
+        setSound(!sound);
+    }
+
     return (
         <StyledTetrisWrapper role="button" tabIndex="0" onKeyDown={handleKeyDown}>
             <StyledTetris>
@@ -450,6 +507,10 @@ const Tetris = ({ socket, selectedGravity }) => {
                 </div>
                 <Stage stage={stage} percentage={20} border={'2px solid #333'} backgroundColor={'#000000ff'} isSpectrum={false} />
                 <div className='right-side'>
+                    <div className='soundIcon' onClick={handleSound}>
+                        {sound ? <SoundOn /> : <SoundOff />}
+                    </div>
+
                     {gameOver ? (
                         <></>
                     ) : (

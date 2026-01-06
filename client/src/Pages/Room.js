@@ -163,7 +163,7 @@ const Room = ({ socket, selectedGravity, setSelectedGravity }) => {
             <ReturnNav>
                 <button onClick={handleLeaveRoom}>&lt;</button>
             </ReturnNav>
-            <StyledPlayerInfo isConnected={socket?.connected}>
+            <StyledPlayerInfo $isConnected={socket?.connected}>
                 <div className="status-dot"></div>
                 {player && (
                     <span>{player.name}</span>
@@ -248,7 +248,7 @@ const Room = ({ socket, selectedGravity, setSelectedGravity }) => {
                                 players.filter(p => p).map((player, index) => (
                                 <StyledPlayerItem key={index}>
                                     <div className="name">{player.name}</div>
-                                    <StyledPlayerStatus isOwner={player.owner}>
+                                    <StyledPlayerStatus $isOwner={player.owner}>
                                         {player.owner ? 'Owner' : 'Player'}
                                     </StyledPlayerStatus>
                                 </StyledPlayerItem>

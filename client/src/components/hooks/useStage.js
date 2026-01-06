@@ -17,7 +17,7 @@ export const useStage = (player, resetPlayer) => {
             return newStage;
         });
     }, []);
-
+    
     useEffect(() => {
         setRowsCleared(0);
 
@@ -36,12 +36,15 @@ export const useStage = (player, resetPlayer) => {
             }, []);
         };
 
+
+
         const updateStage = (prevStage) => {
             // ÉTAPE CRUCIALE : On nettoie le plateau uniquement des cellules "non-fixées" (le joueur)
             // Les cellules 'merged' (anciennes pièces et pénalités) sont conservées intactes.
             const freshStage = prevStage.map(row =>
                 row.map(cell => (cell[1] === 'clear' ? [0, 'clear'] : cell))
             );
+            
 
             // On dessine la pièce actuelle du joueur sur ce plateau propre
             const newStage = drawPlayer(freshStage, player);

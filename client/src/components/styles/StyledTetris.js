@@ -44,10 +44,9 @@ export const StyledTetris = styled.div`
         gap: 20px;
         max-width: 200px;
         padding: 0 20px;
-    }
-`
 
-export const StyledNextPiece = styled.div`
-    display: green;
-    
+        .soundIcon {
+            cursor:pointer;
+        }
+    }
 `

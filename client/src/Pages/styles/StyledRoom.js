@@ -30,8 +30,8 @@ export const StyledPlayerInfo = styled.div`
         width: 12px;
         height: 12px;
         border-radius: 50%;
-        background-color: ${props => props.isConnected ? '#00ff00' : '#ff0000'};
-        box-shadow: 0 0 10px ${props => props.isConnected ? '#00ff00' : '#ff0000'};
+        background-color: ${props => props.$isConnected ? '#00ff00' : '#ff0000'};
+        box-shadow: 0 0 10px ${props => props.$isConnected ? '#00ff00' : '#ff0000'};
         animation: pulse 2s infinite;
     }
 
@@ -181,7 +181,7 @@ export const ReturnNav = styled.div`
 export const StyledPlayerStatus = styled.div`
     padding: 5px 10px;
     border-radius: 8px;
-    background-color: ${props => props.isOwner ? 'gold' : 'silver'};
+    background-color: ${props => props.$isOwner ? 'gold' : 'silver'};
     color: black;
     font-weight: bold;
     font-size: 0.9rem;

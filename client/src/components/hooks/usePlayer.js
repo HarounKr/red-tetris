@@ -1,9 +1,25 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { TETROMINOS } from '../../tetrominos';
 import { checkCollision, STAGE_WIDTH } from '../../gameHelpers';
+import rotateBlock from '../../assets/rotate-sound.wav'
 
-export const usePlayer = (sharedSequence = null) => {
+
+export const usePlayer = (sharedSequence = null, sound) => {
     const sequenceIndexRef = useRef(0);
+    const rotateBlockSound = useRef();
+
+
+    useEffect(() => {
+        rotateBlockSound.current = new Audio(rotateBlock);
+        rotateBlockSound.current.preload = 'auto';
+    }, []);
+
+    const playRotateBlockSound = () => {
+        if (sound) {
+            rotateBlockSound.current.currentTime = 0;
+            rotateBlockSound.current.play();
+        }
+    }
 
     const getNextTetromino = () => {
         if (sharedSequence && sharedSequence.length > 0) {
@@ -27,6 +43,8 @@ export const usePlayer = (sharedSequence = null) => {
 
     const rotate = (tetromino, dir) => {
         const rotatedTetro = [];
+
+        playRotateBlockSound();
         for (let x = 0; x < tetromino[0].length; x++) {
             const row = [];
             for (let y = 0; y < tetromino.length; y++) {
@@ -36,6 +54,7 @@ export const usePlayer = (sharedSequence = null) => {
         }
         if (dir > 0)
             return rotatedTetro.map(row => row.reverse());
+        
         return rotatedTetro.reverse();
     };
 
@@ -50,7 +69,7 @@ export const usePlayer = (sharedSequence = null) => {
                 clonedPlayer.pos.x += offset;
                 offset = -(offset + (offset > 0 ? 1 : -1));
                 if (offset > clonedPlayer.tetromino[0].length) {
-                    rotate(clonedPlayer.tetromino, -dir);
+                    rotate(clonedPlayer.tetromino, -dir, sound);
                     clonedPlayer.pos.x = pos;
                     return;                                    
                 }
