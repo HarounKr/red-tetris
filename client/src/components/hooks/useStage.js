@@ -61,12 +61,6 @@ export const useStage = (player, resetPlayer) => {
 
     }, [player, resetPlayer]); // Ne pas mettre 'stage' ici pour éviter les boucles infinies
 
-    const drawPlayerSpectrum = (player) => {
-        const spectrumStage = createStage(STAGE_HEIGHT, STAGE_WIDTH);
-        const playerSpectrum = drawPlayer(spectrumStage, player);
-        return playerSpectrum;
-    };
-
     const drawNextTetrominoShape = (nextRandomShape) => {
         if (!nextRandomShape) return createStage(4, 4);
 
@@ -88,8 +82,8 @@ export const useStage = (player, resetPlayer) => {
         stage,
         setStage,
         rowsCleared,
-        drawPlayerSpectrum,
         drawNextTetrominoShape,
         addPenaltyRows
+    
     ];
 };

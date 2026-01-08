@@ -137,7 +137,7 @@ const Scoreboard = ({ scores, mySocketId, onClose, onRestart, isOwner }) => {
         <StyledScoreboard>
             <h2>Tableau des Scores</h2>
             
-            <div className={`winner-banner ${amIWinner ? 'win' : 'lose'}`}>
+            <div data-testid='winner-banner-test' className={`winner-banner ${amIWinner ? 'win' : 'lose'}`}>
                 {amIWinner ? 'Vous avez gagné !' : 'Vous avez perdu !'}
             </div>
 

@@ -248,10 +248,10 @@ const Tetris = ({ socket, selectedGravity }) => {
 
 
     return (
-        <StyledTetrisWrapper role="button" tabIndex="0" onKeyDown={(e) => handleKeyDown({...gameContext, e: e})}>
+        <StyledTetrisWrapper data-testid='testris-wrapper' role="button" tabIndex="0" onKeyDown={(e) => handleKeyDown({...gameContext, e: e})}>
             <StyledTetris>
-                <div className='left-side'>
-                    <Spectrums playersSpectrums={playersSpectrums} />
+                <div  className='left-side'>
+                    <Spectrums  playersSpectrums={playersSpectrums} />
                 </div>
                 <Stage stage={stage} percentage={20} border={'2px solid #333'} backgroundColor={'#000000ff'} isSpectrum={false} />
                 <div className='right-side'>

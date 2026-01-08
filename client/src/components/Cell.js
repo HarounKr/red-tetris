@@ -8,7 +8,7 @@ const Cell = ( { type, isSpectrum }) => {
         ? '255, 229, 204'
         : (TETROMINOS[type]?.color || '0, 0, 0')
     return (
-        <StyledCell type={type} color={color} $isSpectrum={isSpectrum}>
+        <StyledCell data-testid='test-cell' type={type} color={color} $isSpectrum={isSpectrum}>
             
         </StyledCell>
     );

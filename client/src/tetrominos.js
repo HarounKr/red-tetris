@@ -58,12 +58,3 @@ export const TETROMINOS = {
         color: '245, 90, 90',    // rouge saumon
     },
 };
-
-
-export const randomTetromino = () => {
-    const tetrominos = 'IJLOSTZ';
-    const random = Math.floor(Math.random() * tetrominos.length);
-    const randTetromino = tetrominos[random];
-    
-    return TETROMINOS[randTetromino];
-};
