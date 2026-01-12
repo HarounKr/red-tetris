@@ -22,9 +22,9 @@ export const handleKeyDown = ({e, gameOver, player, stage, dropSoundRef, playerR
             playSound(dropSoundRef)
             drop();
         } else if (e.keyCode === 38) {
-            playerRotate(stage, 1); 
+            playerRotate(stage, 1);
         } else if (e.keyCode === 32) {
             hardDrop();
         }
-}
+    }
 };

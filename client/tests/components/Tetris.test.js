@@ -16,7 +16,7 @@ vi.mock('../../src/components/Spectrums', () => ({
 }));
 
 const mySocket = {
-    id: 'socket-1',
+    id: 1,
     connected: false,
     on: () => {},
     off: () => {},

@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
 
-  // 👇 Autorise le JSX dans les fichiers .js de ton projet
+
   esbuild: {
     loader: 'jsx',
     include: [
@@ -18,5 +18,11 @@ export default defineConfig({
     environment: 'jsdom',
     globals: 'true',
     setupFiles: './tests/setup.js',
+    coverage: {
+      exclude: [
+        'src/assets/**',
+        'src/Pages/styles/**',
+      ]
+    }
   },
 })

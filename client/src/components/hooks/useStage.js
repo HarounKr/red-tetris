@@ -3,8 +3,8 @@ import { createStage, drawPlayer, STAGE_HEIGHT, STAGE_WIDTH } from '../../game/g
 
 export const useStage = (player, resetPlayer) => {
     const [stage, setStage] = useState(createStage(STAGE_HEIGHT, STAGE_WIDTH));
+    
     const [rowsCleared, setRowsCleared] = useState(0);
-
     // Fonction pour ajouter les pénalités de manière persistante
     const addPenaltyRows = useCallback((rowsCount) => {
         setStage(prev => {
@@ -83,7 +83,6 @@ export const useStage = (player, resetPlayer) => {
         setStage,
         rowsCleared,
         drawNextTetrominoShape,
-        addPenaltyRows
-    
+        addPenaltyRows,
     ];
 };

@@ -64,7 +64,7 @@ export const usePlayer = (sharedSequence = null, sound) => {
         // Ne tente la rotation que si ce n’est pas un bloc O.
         if (!hasO) {
             // Copie profonde du joueur pour ne pas muter l’état.
-            const clonedPlayer = JSON.parse(JSON.stringify(player));    
+            const clonedPlayer = JSON.parse(JSON.stringify(player));
             // Applique la rotation demandée sur le tétrimino copié.
             clonedPlayer.tetromino = rotate(clonedPlayer.tetromino, dir);
             // Mémorise la position x d’origine pour un éventuel rollback.
@@ -112,5 +112,5 @@ export const usePlayer = (sharedSequence = null, sound) => {
 
     
 
-    return [player, updatePlayerPos, resetPlayer, nextRandomShape, playerRotate];
+    return [player, updatePlayerPos, resetPlayer, nextRandomShape, playerRotate, setPlayer];
 };

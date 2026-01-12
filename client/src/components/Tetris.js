@@ -40,7 +40,7 @@ const Tetris = ({ socket, selectedGravity }) => {
     const [sound, setSound] = useState(false);
     const [gameOver, setGameOver] = useState(false);
     const [dropTime, setDropTime] = useState(null);
-    const [player, updatePlayerPos, resetPlayer, nextRandomShape, playerRotate] = usePlayer(tetrominoSequence, sound);
+    const [player, updatePlayerPos, resetPlayer, nextRandomShape, playerRotate, setPlayer] = usePlayer(tetrominoSequence, sound);
     const [stage, setStage, rowsCleared, drawNextTetrominoShape, addPenaltyRows] = useStage(player, resetPlayer, gameOver);
     const [level, setLevel, rows, setRows, score, setScore] = useGameStatus(rowsCleared, socket, room);
     const [showScoreboard, setShowScoreboard] = useState(false);

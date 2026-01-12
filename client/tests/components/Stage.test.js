@@ -30,6 +30,5 @@ describe('Stage', () => {
             isSpectrum={true} />)
 
         expect(container.children[0]).not.toBeEmptyDOMElement();
-
     })
 })

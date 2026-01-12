@@ -22,7 +22,7 @@
     "build": "react-scripts build",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "coverage": "vitest run --coverage",
+    "test:coverage": "vitest run --coverage",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
