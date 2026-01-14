@@ -21,7 +21,6 @@ export default defineConfig({
     coverage: {
       exclude: [
         'src/assets/**',
-        'src/Pages/styles/**',
       ]
     }
   },
