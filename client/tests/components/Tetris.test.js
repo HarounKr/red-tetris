@@ -4,12 +4,6 @@ import { MemoryRouter, Route, Routes } from 'react-router'
 import { render, screen } from '@testing-library/react'
 import Tetris from '../../src/components/Tetris'
 
-vi.mock('../../src/assets/icons/volume-on.svg', () => ({
-    ReactComponent: () => null,
-}));
-vi.mock('../../src/assets/icons/volume-off.svg', () => ({
-    ReactComponent: () => null,
-}));
 
 vi.mock('../../src/components/Spectrums', () => ({
     default: () => <div data-testid="spectrums" />

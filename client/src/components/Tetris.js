@@ -14,8 +14,8 @@ import { StyledTetrisWrapper, StyledTetris } from './styles/StyledTetris';
 import { useGameStatus } from './hooks/useGameStatus';
 import { useParams, useNavigate, useLocation } from "react-router";
 import Spectrums from './Spectrums';
-import { ReactComponent as SoundOn } from '../assets/icons/volume-on.svg'
-import { ReactComponent as SoundOff } from '../assets/icons/volume-off.svg'
+import soundOn from '../assets/icons/volume-on.png';
+import soundOff from '../assets/icons/volume-off.png';
 import { dropLogic } from '../game/dropLogic';
 import { usePenaltyHandler } from './hooks/usePenaltyHandler';
 import { useSpectrums } from './hooks/useSpectrums';
@@ -270,7 +270,11 @@ const Tetris = ({ socket, selectedGravity }) => {
                 <Stage stage={stage} percentage={20} border={'2px solid #333'} backgroundColor={'#000000ff'} isSpectrum={false} />
                 <div className='right-side'>
                     <div className='soundIcon' onClick={handleSound}>
-                        {sound ? <SoundOn /> : <SoundOff />}
+                        {sound ? (
+                            <img src={soundOn} alt="Sound on" />
+                        ) : (
+                            <img src={soundOff} alt="Sound off" />
+                        )}
                     </div>
 
                     {gameOver ? (
