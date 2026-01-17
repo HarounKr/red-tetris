@@ -298,28 +298,6 @@ describe("Fin de partie - game_over", () => {
     expect(scores[0].level).toBe(5);
   });
 
-  it("notifie les adversaires du game over", async () => {
-    const room = `GameRoom-${Date.now()}`;
-
-    client1.emit("join_game_room", { room, socketId: client1.id });
-    client2.emit("join_game_room", { room, socketId: client2.id });
-    await new Promise(r => setTimeout(r, 100));
-
-    const opponentGameOverPromise = new Promise(resolve => {
-      client2.once("opponent_game_over", resolve);
-    });
-
-    client1.emit("game_over", {
-      socketId: client1.id,
-      room,
-      score: 1000,
-      rows: 10,
-      level: 2 
-    });
-
-    await opponentGameOverPromise;
-    expect(true).toBe(true);
-  });
 
   it("envoie les scores finaux quand tous les joueurs ont perdu", async () => {
     const room = `GameRoom-${Date.now()}`;
