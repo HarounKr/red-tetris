@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 
-export const usePenaltyHandler = ({socket, hasSubmittedScore, setGameOver, setDropTime, addPenaltyRows, player, stage, room, currentScoreRef, currentRowsRef, currentLevelRef}) => {
+export const usePenaltyHandler = ({socket, hasSubmittedScore, setGameOver, setDropTime, addPenaltyRows, player, stage, room, currentScoreRef, currentRowsRef, currentLevelRef, cancelLock}) => {
 
     useEffect(() => {
         if (!socket) return;
@@ -12,6 +12,7 @@ export const usePenaltyHandler = ({socket, hasSubmittedScore, setGameOver, setDr
             // 2. Appliquer la pénalité de manière persistante
             // On appelle la fonction du hook qui va modifier l'état interne du stage
             addPenaltyRows(penaltyRows);
+            cancelLock();
 
             // 3. Vérification du Game Over
             if (player && player.tetromino) {

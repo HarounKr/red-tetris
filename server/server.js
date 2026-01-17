@@ -42,6 +42,7 @@ app.get("/scoreboard", async (req, res) => {
         res.status(500).json({ error: 'Unexpected error' });
     }
 });
+
 app.get('/api/health', (req, res) => {
     res.send('OK');
 });
@@ -58,8 +59,6 @@ const io = new Server(httpServer, {
         methods: ["GET", "POST"]
     }
 });
-
-
 
 function generaterandomNamewithonlyletters() {
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';

@@ -1,11 +1,19 @@
-.PHONY: all
+.PHONY: all dev build test clean
 
 all:
 	cd server && npm install
 	cd client && npm install
-	@echo "Lancement du serveur et du client..."
+
+dev:
+	@echo "Lancement du serveur et du client en mode dev..."
 	@cd server && npm run dev & \
 	cd client && npm start
+
+build:
+	@echo "Build client..."
+	cd client && npm run build
+	@echo "Lancement du serveur..."
+	cd server && NODE_ENV=production npm start
 
 test:
 	cd server && npm run test:coverage

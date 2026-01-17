@@ -49,6 +49,7 @@ const Tetris = ({ socket, selectedGravity }) => {
     const [dropSoundRef, blockHitSoundRef, gameOverSoundRef, playSound] = useSound(sound);
 
     const hasSubmittedScore = useRef(false);
+    const lockStartRef = useRef(null);
 
     const currentScoreRef = useRef(0);
     const currentRowsRef = useRef(0);
@@ -64,6 +65,17 @@ const Tetris = ({ socket, selectedGravity }) => {
         Rabbit: 100,
     }
 
+    const getDropTimeForLevel = (currentLevel) => {
+        const baseSpeed = gravity[gameModeFromState] || gravity.Standard;
+        if (gameModeFromState === 'Rabbit') {
+            return baseSpeed;
+        }
+        return Math.max(100, baseSpeed - (currentLevel + 1) * 100);
+    };
+
+    const cancelLock = () => {
+        lockStartRef.current = null;
+    };
 
     const drop = () => dropLogic({ ...gameContext, type: 'soft' });
     const hardDrop = () => dropLogic({ ...gameContext, type: 'hard' });
@@ -85,6 +97,9 @@ const Tetris = ({ socket, selectedGravity }) => {
         blockHitSoundRef,
         updatePlayerPos,
         playSound,
+        lockDelayMs: 500,
+        lockStartRef,
+        cancelLock,
         addPenaltyRows,
         currentScoreRef,
         currentRowsRef,
@@ -122,8 +137,7 @@ const Tetris = ({ socket, selectedGravity }) => {
             return;
 
         setStage(createStage(STAGE_HEIGHT, STAGE_WIDTH));
-        const initialDrop = gravity[gameModeFromState] || gravity.Standard;
-        setDropTime(initialDrop);
+        setDropTime(getDropTimeForLevel(0));
         resetPlayer();
         setScore(0);
         setRows(0);

@@ -58,7 +58,6 @@ const Rooms = ({ socket, selectedGravity, setSelectedGravity }) => {
     };
 
     const applyStoredScoreAndPlayerName = async () => {
-      console.log('Fetching scoreboard data from server...');
       await axios.get('http://localhost:8000/scoreboard').then((response) => {
         if (response.data) {
           setScoreboards(response.data);
