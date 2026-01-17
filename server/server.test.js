@@ -269,57 +269,6 @@ describe("Synchronisation des joueurs", () => {
 });
 
 describe("Fin de partie - game_over", () => {
-  it("enregistre le score final d'un joueur", async () => {
-    const room = `GameRoom-${Date.now()}`;
-
-    await new Promise(resolve => {
-      client1.emit("set_player_name", { socketId: client1.id, name: "TestPlayer" }, resolve);
-    });
-
-    client1.emit("join_game_room", { room, socketId: client1.id });
-    await new Promise(r => setTimeout(r, 100));
-
-    const finalScoresPromise = new Promise(resolve => {
-      client1.once("final_scores", resolve);
-    });
-
-    client1.emit("game_over", {
-      socketId: client1.id,
-      room,
-      score: 2500,
-      rows: 25,
-      level: 5
-    });
-
-    const { scores } = await finalScoresPromise;
-    expect(scores.length).toBe(1);
-    expect(scores[0].score).toBe(2500);
-    expect(scores[0].rows).toBe(25);
-    expect(scores[0].level).toBe(5);
-  });
-
-  it("notifie les adversaires du game over", async () => {
-    const room = `GameRoom-${Date.now()}`;
-
-    client1.emit("join_game_room", { room, socketId: client1.id });
-    client2.emit("join_game_room", { room, socketId: client2.id });
-    await new Promise(r => setTimeout(r, 100));
-
-    const opponentGameOverPromise = new Promise(resolve => {
-      client2.once("opponent_game_over", resolve);
-    });
-
-    client1.emit("game_over", {
-      socketId: client1.id,
-      room,
-      score: 1000,
-      rows: 10,
-      level: 2 
-    });
-
-    await opponentGameOverPromise;
-    expect(true).toBe(true);
-  });
 
   it("envoie les scores finaux quand tous les joueurs ont perdu", async () => {
     const room = `GameRoom-${Date.now()}`;

@@ -94,6 +94,5 @@ describe('useSpectrum', () => {
 
         const arg = setPlayersSpectrums.mock.calls[0][0];
         expect(arg[1].player.score).toBe(0)
-       //console.log(arg)
     })
 })
