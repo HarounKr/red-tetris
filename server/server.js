@@ -284,6 +284,9 @@ io.on("connection", (socket) => {
                 rooms = rooms.filter((r) => r.name !== room);
                 io.emit("rooms_list", rooms.filter((r) => !r.start).map((r) => r.name));
             } else if (roomObj.players.length > 0) {
+                roomObj.players.forEach(p => p.owner = false);
+                roomObj.players[0].owner = true;
+                io.to(roomObj.players[0].socketId).emit("you_are_owner", { owner: true });
                 const otherPlayersData = roomObj.players.map(p => ({
                     name: p.name,
                     socketId: p.socketId,
@@ -336,13 +339,12 @@ io.on("connection", (socket) => {
                 player.finalRows = rows;
                 player.finalLevel = level;
                 player.gameOver = true;
+                player.owner = false;
             }
 
-            socket.to(room).emit("opponent_game_over");
+            const gameOverCount = roomObj.players.filter(p => p.gameOver).length;
 
-            const allGameOver = roomObj.players.every(p => p.gameOver);
-
-            if (allGameOver || roomObj.players.length === 1) {
+            if (roomObj.players.length - gameOverCount === 1) {
                 const scores = roomObj.players.map(p => ({
                     socketId: p.socketId,
                     name: p.name,
@@ -353,10 +355,10 @@ io.on("connection", (socket) => {
                 for (const p of roomObj.players) {
                     insertScore(p.name, p.finalScore || 0);
                 }
-                const owner = roomObj.players.find(p => p.owner === true);
-                const ownerSocketId = owner ? owner.socketId : (roomObj.players[0] ? roomObj.players[0].socketId : null);
+                const owner = roomObj.players.find(p => p.gameOver === false);
+                const ownerSocketId = owner ? owner.socketId : null;
                 io.to(room).emit("final_scores", { scores, ownerSocketId });
-
+                io.to(ownerSocketId).emit("you_are_owner", { owner: true });
                 io.to(socketId).emit("final_scores", { scores, ownerSocketId });
             }
         }
