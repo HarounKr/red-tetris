@@ -177,7 +177,6 @@ io.on("connection", (socket) => {
             }
             if (roomObj.players)
                 io.to(room).emit("players_list_in_room", roomObj.players);
-            console.log("restarting room join:", roomObj);
 
         }
 
