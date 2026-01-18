@@ -78,7 +78,8 @@ io.on("connection", (socket) => {
         socketId: socket.id,
         owner: false,
         TetrisMap: [],
-        score: 0
+        score: 0,
+        gameOver: false
     };
     users.push(user);
     socket.on("start_game", ({ gameRoom }) => {
@@ -141,7 +142,7 @@ io.on("connection", (socket) => {
         io.emit("players_list", users.map((user) => user.name).filter((name) => name !== null));
     }); 
 
-    socket.on("join_room", ({ room, socketId }) => {
+    socket.on("join_room", ({ room, socketId}) => {
         socket.join(room);
         if (!rooms.find((r) => r.name === room)) {
             let roomObj = {};
@@ -165,11 +166,19 @@ io.on("connection", (socket) => {
         else {
             let roomObj = rooms.find((r) => r.name === room);
             let userToAdd = users.find((user) => user.socketId === socketId);
+            if (userToAdd) {
+                userToAdd.owner = false;
+                io.to(userToAdd.socketId).emit("you_are_owner", { owner: false });
+            }
+            if (roomObj.players.length === 0)
+                userToAdd.owner = true;
             if (roomObj && userToAdd && !roomObj.players.find((p) => p.socketId === socketId)) {
                 roomObj.players.push(userToAdd);
             }
             if (roomObj.players)
                 io.to(room).emit("players_list_in_room", roomObj.players);
+            console.log("restarting room join:", roomObj);
+
         }
 
     }); 
@@ -181,6 +190,11 @@ io.on("connection", (socket) => {
     socket.on("leave_room", ({ room, socketId }) => {
         const roomObj = rooms.find(r => r.name === room);
         if (!roomObj) return;
+
+        const leavingPlayer = roomObj.players.find(p => p.socketId === socketId);
+        if (leavingPlayer) {
+            leavingPlayer.owner = false;
+        }
 
         roomObj.players = roomObj.players.filter(
             p => p.socketId !== socketId
@@ -198,7 +212,6 @@ io.on("connection", (socket) => {
         if (roomObj.players.length === 0 && !roomObj.start) {
             rooms = rooms.filter(r => r.name !== room);
         }
-
         io.to(room).emit("players_list_in_room", roomObj.players);
 
         io.emit(
@@ -262,6 +275,7 @@ io.on("connection", (socket) => {
             rooms.push(roomObj);
         } else {
             const user = users.find((u) => u.socketId === socketId);
+            user.owner = false;
             if (user && !roomObj.players.find((p) => p.socketId === socketId)) {
                 roomObj.players.push(user);
             }
@@ -342,7 +356,15 @@ io.on("connection", (socket) => {
                 player.owner = false;
             }
 
+            if (roomObj.players.length === 1 && player) {
+                player.gameOver = false;
+                roomObj.players.forEach(p => p.owner = false);
+                player.owner = true;
+                io.to(player.socketId).emit("you_are_owner", { owner: true });
+            }
+
             const gameOverCount = roomObj.players.filter(p => p.gameOver).length;
+
 
             if (roomObj.players.length - gameOverCount === 1) {
                 const scores = roomObj.players.map(p => ({
@@ -352,11 +374,15 @@ io.on("connection", (socket) => {
                     rows: p.finalRows || 0,
                     level: p.finalLevel || 0
                 }));
-                for (const p of roomObj.players) {
-                    insertScore(p.name, p.finalScore || 0);
-                }
                 const owner = roomObj.players.find(p => p.gameOver === false);
+                if (owner) {
+                    owner.gameOver = false;
+                }
                 const ownerSocketId = owner ? owner.socketId : null;
+                roomObj.players.forEach(p => p.owner = false);
+                if (owner) {
+                    owner.owner = true;
+                }
                 io.to(room).emit("final_scores", { scores, ownerSocketId });
                 io.to(ownerSocketId).emit("you_are_owner", { owner: true });
                 io.to(socketId).emit("final_scores", { scores, ownerSocketId });
@@ -374,7 +400,9 @@ io.on("connection", (socket) => {
                 player.finalLevel = level;
                 player.gameOver = true;
             }
-
+            for (const p of roomObj.players) {
+                insertScore(p.name, p.finalScore || 0);
+            }
             const scores = roomObj.players.map(p => ({
                 socketId: p.socketId,
                 name: p.name,
@@ -382,12 +410,9 @@ io.on("connection", (socket) => {
                 rows: p.finalRows || 0,
                 level: p.finalLevel || 0
             }));
+
             const owner = roomObj.players.find(p => p.owner);
             const ownerSocketId = owner ? owner.socketId : null;
-            for (const p of roomObj.players) {
-                insertScore(p.name, p.finalScore || 0);
-            }
-
             io.to(room).emit("final_scores", { scores, ownerSocketId });
         }
     });
@@ -411,9 +436,14 @@ io.on("connection", (socket) => {
                     p.finalLevel = 0;
                     p.gameOver = false;
                     p.stage = [];
+                    p.owner = false;
                 }
             });
-            io.to(room).emit("restart_game", { room, tetrominoSequence: sequence });
+            const requestingPlayer = roomObj.players.find(p => p.socketId === socket.id);
+            io.to(requestingPlayer.socketId).emit("restart_game", { room, tetrominoSequence: sequence });
+            setTimeout(() => {
+                io.to(room).emit("restart_game", { room, tetrominoSequence: sequence });
+            }, 100);
         }
     });
 

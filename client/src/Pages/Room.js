@@ -49,6 +49,28 @@ const Room = ({ socket, selectedGravity, setSelectedGravity }) => {
             navigate("/", { replace: true });
             return;
         }
+        socket.emit("check_room_status", { room: params.room }, (response) => {
+
+            if (!response.exists) {
+                navigate("/" + params.room, {
+                    state: {
+                        playerName: playerRef.current ? playerRef.current.name : undefined
+                    },
+                    replace: true
+                });
+                return;
+            }
+
+            if (!response.inGame) {
+                navigate("/" + params.room, {
+                    state: { playerName: playerRef.current ? playerRef.current.name : undefined },
+                    replace: true
+                });
+                return;
+            }
+
+            navigate("/", { replace: true });
+        });
 
         const playerNameFromState = location.state?.playerName;
         const playerNameFromSession = sessionStorage.getItem('playerName');
