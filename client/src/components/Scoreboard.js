@@ -133,6 +133,7 @@ const Scoreboard = ({ scores, mySocketId, onClose, onRestart, isOwner }) => {
     
     const amIWinner = sortedScores.length > 0 && sortedScores[0].socketId === mySocketId;
 
+
     return (
         <StyledScoreboard>
             <h2>Tableau des Scores</h2>

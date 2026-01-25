@@ -73,9 +73,6 @@ const Tetris = ({ socket, selectedGravity }) => {
         return Math.max(100, baseSpeed - (currentLevel + 1) * 100);
     };
 
-    const cancelLock = () => {
-        lockStartRef.current = null;
-    };
 
     const drop = () => dropLogic({ ...gameContext, type: 'soft' });
     const hardDrop = () => dropLogic({ ...gameContext, type: 'hard' });
@@ -99,7 +96,6 @@ const Tetris = ({ socket, selectedGravity }) => {
         playSound,
         lockDelayMs: 500,
         lockStartRef,
-        cancelLock,
         addPenaltyRows,
         currentScoreRef,
         currentRowsRef,
@@ -273,7 +269,7 @@ const Tetris = ({ socket, selectedGravity }) => {
                         {sound ? (
                             <img src={soundOn} alt="Sound on" />
                         ) : (
-                            <img src={soundOff} alt="Sound off" />
+                            <img src={soundOff} alt="Sound offplayer_state_update" />
                         )}
                     </div>
 

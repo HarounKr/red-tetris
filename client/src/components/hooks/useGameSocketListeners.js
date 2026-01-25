@@ -20,8 +20,10 @@ export const useGameSocketListeners = ({ socket, currentScoreRef, currentRowsRef
             };
     
             const handleFinalScores = ({ scores, ownerSocketId }) => {
+            
     
                 setFinalScores(scores);
+    
                 if (ownerSocketId) {
                     setIsOwner(ownerSocketId === socket.id);
                 }

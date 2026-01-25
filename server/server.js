@@ -385,7 +385,8 @@ io.on("connection", (socket) => {
                 io.to(room).emit("final_scores", { scores, ownerSocketId });
                 io.to(ownerSocketId).emit("you_are_owner", { owner: true });
                 io.to(socketId).emit("final_scores", { scores, ownerSocketId });
-            }
+                io.to(room).emit("opponent_game_over", { socketId });
+          }
         }
     });
 

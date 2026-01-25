@@ -19,7 +19,7 @@ describe('movement', () => {
             hardDrop: vi.fn(),
             playSound: vi.fn(),
             updatePlayerPos: vi.fn(),
-            cancelLock: vi.fn()
+
         });
 
         expect(preventDefault).toHaveBeenCalledTimes(1);
@@ -39,7 +39,7 @@ describe('movement', () => {
             hardDrop: vi.fn(),
             playSound: vi.fn(),
             updatePlayerPos: vi.fn(),
-            cancelLock: vi.fn()
+
         });
 
         expect(preventDefault).not.toHaveBeenCalled();
@@ -59,7 +59,6 @@ describe('movement', () => {
             hardDrop: vi.fn(),
             playSound: vi.fn(),
             updatePlayerPos: vi.fn(),
-            cancelLock: vi.fn()
         });
         expect(drop).toHaveBeenCalledTimes(1);
     });
@@ -79,7 +78,6 @@ describe('movement', () => {
             hardDrop: hardDrop,
             playSound: vi.fn(),
             updatePlayerPos: vi.fn(),
-            cancelLock: vi.fn()
         });
         expect(hardDrop).toHaveBeenCalledTimes(1);
     });
@@ -98,7 +96,6 @@ describe('movement', () => {
             hardDrop: vi.fn(),
             playSound: vi.fn(),
             updatePlayerPos: vi.fn(),
-            cancelLock: vi.fn()
         });
 
         expect(playerRotate).toHaveBeenCalledTimes(1);
@@ -127,7 +124,7 @@ describe('movement', () => {
             hardDrop: vi.fn(),
             playSound: playSound,
             updatePlayerPos: updatePlayerPos,
-            cancelLock: vi.fn()
+        
         });
 
         expect(playSound).toHaveBeenCalledTimes(1);
@@ -148,7 +145,7 @@ describe('movement', () => {
             hardDrop: vi.fn(),
             playSound: playSound,
             updatePlayerPos: updatePlayerPos,
-            cancelLock: vi.fn()
+    
         });
 
         expect(playSound).toHaveBeenCalledTimes(1);
